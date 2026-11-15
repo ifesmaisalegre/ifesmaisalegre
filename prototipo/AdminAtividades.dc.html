@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Área Docente — Atividades</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit}
+a{color:#14703F}a:hover{color:#0D4F2C}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #4A56A6;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height: 100%; background: #FAFFFF; color: #1F2A24; font-family: 'Poppins', system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+
+  <dc-import name="Cabecalho" active="docente" hint-size="1280,80"></dc-import>
+
+  <section style="position: relative; overflow: hidden; background: #5F6DB5; color: #FFFFFF">
+    <svg width="110" height="110" viewBox="0 0 100 100" aria-hidden="true" style="position: absolute; right: 4%; top: 14px"><polygon points="50,0 61,30 90,15 70,40 100,50 70,60 90,85 61,70 50,100 39,70 10,85 30,60 0,50 30,40 10,15 39,30" fill="#DDA3F0"></polygon></svg>
+    <svg width="130" height="90" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; right: 16%; bottom: 0"><polygon points="0,100 50,0 100,100" fill="#F9A100"></polygon></svg>
+    <div style="position: relative; max-width: 1200px; margin: 0 auto; padding: 36px 24px 44px">
+      <p style="margin: 0 0 6px; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #FFFFFF">Área Docente</p>
+      <h1 style="margin: 0 0 10px; font-size: 38px; line-height: 1.15; font-weight: 700">Gerenciar atividades</h1>
+      <p style="margin: 0; max-width: 600px; color: #FFFFFF">Cadastre novas atividades e mantenha atualizadas as informações das que já existem.</p>
+    </div>
+  </section>
+
+  <main style="max-width: 1200px; margin: 0 auto; padding: 28px 24px 56px">
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px">
+      <span style="display: flex; flex-wrap: wrap; gap: 8px 20px"><a href="Main.dc.html" style="font-weight: 600">← Voltar ao painel</a><a href="AdminMonitorias.dc.html" style="font-weight: 600">Gerenciar monitorias →</a></span>
+      <sc-if value="{{showList}}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{openNew}}" style="min-height: 48px; padding: 0 24px; border: 2px solid #14703F; border-radius: 10px; background: #14703F; color: #FFFFFF; font-size: 15px; font-weight: 600">+ Nova atividade</button>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{hasNotice}}" hint-placeholder-val="{{ false }}">
+      <p role="status" style="margin: 0 0 16px; font-size: 14px; color: #0F5A33; background: #DDF1E5; border-radius: 10px; padding: 12px 14px">{{notice}}</p>
+    </sc-if>
+
+    <sc-if value="{{showList}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 12px">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 600">Atividades cadastradas</h2>
+        <p role="status" style="margin: 0; font-size: 14px; color: #3C4741; font-weight: 500">{{countText}}</p>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px">
+        <div style="flex: 2 1 260px; display: flex; flex-direction: column; gap: 4px">
+          <label for="f-q" style="font-size: 13px; font-weight: 600; color: #3C4741">Buscar</label>
+          <input id="f-q" type="search" value="{{q}}" onInput="{{onQ}}" placeholder="Nome, responsável ou local" style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 10px; font-size: 15px; background: #FFFFFF; color: #1F2A24; border: 1px solid #B7C4BC">
+        </div>
+        <div style="flex: 1 1 170px; display: flex; flex-direction: column; gap: 4px">
+          <label for="f-cat" style="font-size: 13px; font-weight: 600; color: #3C4741">Categoria</label>
+          <select id="f-cat" value="{{fCat}}" onChange="{{onCat}}" style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 10px; font-size: 15px; background: #FFFFFF; color: #1F2A24; border: 1px solid #B7C4BC">
+            <sc-for list="{{catOptions}}" as="c" hint-placeholder-count="7"><option value="{{c}}">{{c}}</option></sc-for>
+          </select>
+        </div>
+        <div style="flex: 1 1 170px; display: flex; flex-direction: column; gap: 4px">
+          <label for="f-st" style="font-size: 13px; font-weight: 600; color: #3C4741">Situação</label>
+          <select id="f-st" value="{{fStatus}}" onChange="{{onStatus}}" style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 10px; font-size: 15px; background: #FFFFFF; color: #1F2A24; border: 1px solid #B7C4BC">
+            <sc-for list="{{statusOptions}}" as="st" hint-placeholder-count="5"><option value="{{st}}">{{st}}</option></sc-for>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x: auto; background: #FFFFFF; border: 1px solid #E3ECE7; border-radius: 16px">
+        <div style="min-width: 1020px">
+          <div style="display: grid; grid-template-columns: 1.6fr 1.5fr 1.1fr 1fr 0.9fr 1.2fr 1.6fr; gap: 12px; padding: 12px 20px; background: #EEF3F0; border-radius: 16px 16px 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #3C4741">
+            <span>Atividade</span><span>Dias e horário</span><span>Local</span><span>Responsável</span><span>Vagas / inscrição</span><span>Situação</span><span>Ações</span>
+          </div>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+            <div style="display: grid; grid-template-columns: 1.6fr 1.5fr 1.1fr 1fr 0.9fr 1.2fr 1.6fr; gap: 12px; padding: 14px 20px; border-top: 1px solid #E3ECE7; font-size: 14px; align-items: center">
+              <span><span style="display: block; font-weight: 600">{{r.name}}</span><span style="{{r.catStyle}}">{{r.category}}</span><span style="display: block; margin-top: 4px; font-size: 12px; color: #5A6660">{{r.photoCount}}</span></span>
+              <span>{{r.schedule}}</span>
+              <span>{{r.place}}</span>
+              <span>{{r.responsible}}</span>
+              <span>{{r.spots}}</span>
+              <span><span style="{{r.statusStyle}}">{{r.status}}</span></span>
+              <span>
+                <sc-if value="{{r.notConfirming}}" hint-placeholder-val="{{ true }}">
+                  <span style="display: flex; flex-wrap: wrap; gap: 8px">
+                    <button onClick="{{r.edit}}" aria-label="{{r.editLabel}}" style="min-height: 44px; padding: 0 14px; border: 2px solid #14703F; border-radius: 10px; background: #FFFFFF; color: #14703F; font-size: 14px; font-weight: 600">Editar</button>
+                    <button onClick="{{r.ask}}" aria-label="{{r.deleteLabel}}" style="min-height: 44px; padding: 0 14px; border: 2px solid #8A2E0B; border-radius: 10px; background: #FFFFFF; color: #8A2E0B; font-size: 14px; font-weight: 600">Excluir</button>
+                  </span>
+                </sc-if>
+                <sc-if value="{{r.isConfirming}}" hint-placeholder-val="{{ false }}">
+                  <span style="display: flex; flex-direction: column; gap: 6px">
+                    <span style="font-size: 13px; font-weight: 600; color: #8A2E0B">Excluir esta atividade?</span>
+                    <span style="display: flex; flex-wrap: wrap; gap: 8px">
+                      <button onClick="{{r.confirmDel}}" style="min-height: 44px; padding: 0 14px; border: 2px solid #8A2E0B; border-radius: 10px; background: #8A2E0B; color: #FFFFFF; font-size: 14px; font-weight: 600">Sim, excluir</button>
+                      <button onClick="{{r.cancelDel}}" style="min-height: 44px; padding: 0 14px; border: 2px solid #3C4741; border-radius: 10px; background: #FFFFFF; color: #3C4741; font-size: 14px; font-weight: 600">Cancelar</button>
+                    </span>
+                  </span>
+                </sc-if>
+              </span>
+            </div>
+          </sc-for>
+          <sc-if value="{{noItems}}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 0; padding: 24px 20px; color: #5A6660">{{emptyMsg}}</p>
+          </sc-if>
+        </div>
+      </div>
+      <p style="margin: 12px 0 0; font-size: 13px; color: #5A6660">Dados de exemplo apenas para demonstração do layout.</p>
+    </sc-if>
+
+    <sc-if value="{{showForm}}" hint-placeholder-val="{{ false }}">
+      <div style="background: #FFFFFF; border: 1px solid #E3ECE7; border-radius: 16px; padding: 28px; max-width: 860px">
+        <h2 style="margin: 0 0 4px; font-size: 22px; font-weight: 600">{{formTitle}}</h2>
+        <p style="margin: 0 0 20px; font-size: 14px; color: #5A6660">Os campos marcados com * são obrigatórios. As fotos são opcionais.</p>
+
+        <sc-if value="{{hasErrors}}" hint-placeholder-val="{{ false }}">
+          <p role="alert" style="margin: 0 0 18px; font-size: 14px; color: #8A2E0B; background: #FBDDD0; border-radius: 10px; padding: 12px 14px">{{errorSummary}}</p>
+        </sc-if>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 18px">
+
+          <div style="flex: 2 1 320px; display: flex; flex-direction: column; gap: 6px">
+            <label for="a-name" style="font-size: 13px; font-weight: 600; color: #3C4741">Nome da atividade *</label>
+            <input id="a-name" type="text" value="{{f.name.value}}" onChange="{{f.name.onChange}}" style="{{f.name.inputStyle}}">
+            <p style="{{f.name.errStyle}}">{{f.name.err}}</p>
+          </div>
+          <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 6px">
+            <label for="a-cat" style="font-size: 13px; font-weight: 600; color: #3C4741">Categoria *</label>
+            <select id="a-cat" value="{{f.category.value}}" onChange="{{f.category.onChange}}" style="{{f.category.inputStyle}}">
+              <sc-for list="{{categories}}" as="c" hint-placeholder-count="6">
+                <option value="{{c}}">{{c}}</option>
+              </sc-for>
+            </select>
+            <p style="{{f.category.errStyle}}">{{f.category.err}}</p>
+          </div>
+
+          <div style="flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px">
+            <label for="a-desc" style="font-size: 13px; font-weight: 600; color: #3C4741">Descrição *</label>
+            <textarea id="a-desc" rows="4" value="{{f.description.value}}" onChange="{{f.description.onChange}}" placeholder="Explique em poucas linhas o que acontece na atividade" style="{{f.description.inputStyle}}"></textarea>
+            <p style="{{f.description.errStyle}}">{{f.description.err}}</p>
+          </div>
+
+          <fieldset style="flex: 1 1 100%; margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+            <legend style="padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #3C4741">Dias da semana *</legend>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <sc-for list="{{days}}" as="d" hint-placeholder-count="6">
+                <label style="{{d.style}}"><input type="checkbox" checked="{{d.checked}}" onChange="{{d.toggle}}" aria-label="{{d.full}}" style="width: 18px; height: 18px; margin: 0; accent-color: #14703F"><span>{{d.short}}</span></label>
+              </sc-for>
+            </div>
+            <p style="{{daysErrStyle}}">{{daysErr}}</p>
+          </fieldset>
+
+          <fieldset style="flex: 1 1 100%; margin: 0; padding: 0; border: 0">
+            <legend style="padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #3C4741">A atividade precisa de inscrição prévia? *</legend>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <label style="{{signupYesStyle}}"><input type="radio" name="a-signup" checked="{{signupYes}}" onChange="{{setSignupYes}}" style="width: 18px; height: 18px; margin: 0; accent-color: #14703F"><span>Sim, exige inscrição</span></label>
+              <label style="{{signupNoStyle}}"><input type="radio" name="a-signup" checked="{{signupNo}}" onChange="{{setSignupNo}}" style="width: 18px; height: 18px; margin: 0; accent-color: #14703F"><span>Não, participação livre</span></label>
+            </div>
+            <p style="margin: 8px 0 0; font-size: 13px; color: #5A6660">Atividades sem inscrição prévia (como as monitorias) não mostram o formulário de inscrição nem o número de vagas no site.</p>
+          </fieldset>
+
+          <div style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 6px">
+            <label for="a-start" style="font-size: 13px; font-weight: 600; color: #3C4741">Início *</label>
+            <input id="a-start" type="time" value="{{f.start.value}}" onChange="{{f.start.onChange}}" style="{{f.start.inputStyle}}">
+            <p style="{{f.start.errStyle}}">{{f.start.err}}</p>
+          </div>
+          <div style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 6px">
+            <label for="a-end" style="font-size: 13px; font-weight: 600; color: #3C4741">Término (opcional)</label>
+            <input id="a-end" type="time" value="{{f.end.value}}" onChange="{{f.end.onChange}}" style="{{f.end.inputStyle}}">
+            <p style="{{f.end.errStyle}}">{{f.end.err}}</p>
+          </div>
+          <div style="flex: 2 1 260px; display: flex; flex-direction: column; gap: 6px">
+            <label for="a-place" style="font-size: 13px; font-weight: 600; color: #3C4741">Local *</label>
+            <input id="a-place" type="text" value="{{f.place.value}}" onChange="{{f.place.onChange}}" placeholder="Ex.: Ginásio" style="{{f.place.inputStyle}}">
+            <p style="{{f.place.errStyle}}">{{f.place.err}}</p>
+          </div>
+
+          <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 6px">
+            <label for="a-resp" style="font-size: 13px; font-weight: 600; color: #3C4741">Docente responsável *</label>
+            <input id="a-resp" type="text" value="{{f.responsible.value}}" onChange="{{f.responsible.onChange}}" style="{{f.responsible.inputStyle}}">
+            <p style="{{f.responsible.errStyle}}">{{f.responsible.err}}</p>
+          </div>
+          <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 6px">
+            <label for="a-mail" style="font-size: 13px; font-weight: 600; color: #3C4741">E-mail de contato *</label>
+            <input id="a-mail" type="email" value="{{f.email.value}}" onChange="{{f.email.onChange}}" style="{{f.email.inputStyle}}">
+            <p style="{{f.email.errStyle}}">{{f.email.err}}</p>
+          </div>
+          <div style="flex: 1 1 140px; display: flex; flex-direction: column; gap: 6px">
+            <label for="a-spots" style="font-size: 13px; font-weight: 600; color: #3C4741">{{spotsLabel}}</label>
+            <input id="a-spots" type="number" min="1" value="{{f.spots.value}}" disabled="{{spotsDisabled}}" onChange="{{f.spots.onChange}}" style="{{f.spots.inputStyle}}">
+            <p style="{{f.spots.errStyle}}">{{f.spots.err}}</p>
+          </div>
+
+          <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 6px">
+            <label for="a-aud" style="font-size: 13px; font-weight: 600; color: #3C4741">Quem pode participar *</label>
+            <input id="a-aud" type="text" value="{{f.audience.value}}" onChange="{{f.audience.onChange}}" placeholder="Ex.: Todos os alunos" style="{{f.audience.inputStyle}}">
+            <p style="{{f.audience.errStyle}}">{{f.audience.err}}</p>
+          </div>
+          <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 6px">
+            <label for="a-status" style="font-size: 13px; font-weight: 600; color: #3C4741">Situação *</label>
+            <select id="a-status" value="{{f.status.value}}" onChange="{{f.status.onChange}}" style="{{f.status.inputStyle}}">
+              <sc-for list="{{statuses}}" as="st" hint-placeholder-count="3">
+                <option value="{{st}}">{{st}}</option>
+              </sc-for>
+            </select>
+            <p style="{{f.status.errStyle}}">{{f.status.err}}</p>
+          </div>
+
+          <div style="flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; padding: 16px; background: #F4F7F5; border-radius: 12px">
+            <label for="a-photo" style="font-size: 13px; font-weight: 600; color: #3C4741">Fotos da atividade (opcional)</label>
+            <input id="a-photo" type="file" accept="image/*" multiple onChange="{{pickPhotos}}" style="font-size: 14px">
+            <p style="margin: 0; font-size: 13px; color: #5A6660">Você pode escolher várias fotos de uma vez ou adicionar aos poucos. A primeira da lista é a capa. Sem fotos, o site mostra uma imagem padrão com o logo.</p>
+            <sc-if value="{{hasPhotos}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px">
+                <span role="status" style="font-size: 14px; font-weight: 600">{{photoSummary}}</span>
+                <button onClick="{{clearPhotos}}" style="min-height: 44px; padding: 0 14px; border: 2px solid #8A2E0B; border-radius: 10px; background: #FFFFFF; color: #8A2E0B; font-size: 14px; font-weight: 600">Remover todas</button>
+              </div>
+              <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+                <sc-for list="{{photoList}}" as="p" hint-placeholder-count="3">
+                  <li style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 6px 12px; background: #FFFFFF; border: 1px solid #D5E0DA; border-radius: 10px">
+                    <span style="font-size: 14px"><strong style="font-weight: 600">{{p.cover}}</strong> · {{p.name}}</span>
+                    <button onClick="{{p.remove}}" aria-label="{{p.removeLabel}}" style="min-height: 44px; padding: 0 14px; border: 2px solid #8A2E0B; border-radius: 10px; background: #FFFFFF; color: #8A2E0B; font-size: 14px; font-weight: 600">Remover</button>
+                  </li>
+                </sc-for>
+              </ul>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px">
+          <button onClick="{{save}}" style="min-height: 48px; padding: 0 28px; border: 2px solid #14703F; border-radius: 10px; background: #14703F; color: #FFFFFF; font-size: 15px; font-weight: 600">{{saveLabel}}</button>
+          <button onClick="{{cancel}}" style="min-height: 48px; padding: 0 28px; border: 2px solid #3C4741; border-radius: 10px; background: #FFFFFF; color: #3C4741; font-size: 15px; font-weight: 600">Cancelar</button>
+        </div>
+      </div>
+    </sc-if>
+
+  </main>
+
+  <dc-import name="Rodape" hint-size="1280,340"></dc-import>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1700}}'>
+class Component extends DCLogic {
+  state = {
+    view: 'list',
+    editingId: null,
+    deletingId: null,
+    notice: '',
+    nextId: 8,
+    form: {},
+    formDays: [],
+    photos: [],
+    errors: {},
+    q: '',
+    fCat: 'Todas',
+    fStatus: 'Todas',
+    items: [
+      { id: 1, name: 'Clube do livro', category: 'Cultura e arte', description: 'Nosso clube tem a intenção de reunir pessoas dispostas a aprender, imaginar e debater diversas obras.', days: ['Ter'], start: '16:00', end: '', place: 'Ao lado do ginásio', responsible: 'A definir', email: '', spots: '20', audience: 'Todos os alunos', status: 'Inscrições abertas', photos: [] },
+      { id: 2, name: 'Vôlei', category: 'Esporte', description: 'Treinos e jogos de vôlei abertos a alunos que querem praticar esporte e fazer novas amizades.', days: ['Qua'], start: '16:00', end: '', place: 'Ginásio de esportes', responsible: 'A definir', email: '', spots: '24', audience: 'Todos os alunos', status: 'Inscrições abertas', photos: [] },
+      { id: 3, name: 'Monitorias', category: 'Estudos', description: 'A monitoria é um ambiente que oferece apoio aos alunos em diferentes disciplinas. Ficou com alguma dúvida nas matérias escolares? Venha saná-las na monitoria!', days: ['Seg', 'Ter', 'Qua', 'Qui'], start: '15:40', end: '16:30', place: 'Bloco C e laboratórios de informática', responsible: 'A definir', email: '', spots: '', audience: 'Todos os alunos', status: 'Ativa', signup: 'nao', photos: [] },
+      { id: 4, name: 'Futebol', category: 'Esporte', description: 'Treinos e partidas para quem gosta de futebol, em um ambiente de integração entre os alunos.', days: ['Seg', 'Qua'], start: '16:00', end: '17:30', place: 'Campo de futebol', responsible: 'A definir', email: '', spots: '22', audience: 'Todos os alunos', status: 'Inscrições abertas', photos: [] },
+      { id: 5, name: 'Clube de teatro', category: 'Cultura e arte', description: 'Oficinas e ensaios para quem quer experimentar a expressão corporal, a voz e a criação de cenas.', days: ['Sex'], start: '14:00', end: '16:00', place: 'Auditório', responsible: 'A definir', email: '', spots: '18', audience: 'Todos os alunos', status: 'Inscrições abertas', photos: [] },
+      { id: 6, name: 'Clube de xadrez', category: 'Jogos', description: 'Partidas e estudo de estratégias para jogadores de todos os níveis, de iniciantes a experientes.', days: ['Ter'], start: '14:00', end: '15:30', place: 'Sala de jogos', responsible: 'A definir', email: '', spots: '16', audience: 'Todos os alunos', status: 'Inscrições abertas', photos: [] },
+      { id: 7, name: 'Clube de corrida', category: 'Esporte', description: 'Treinos de corrida em grupo, respeitando o ritmo de cada participante.', days: ['Seg'], start: '17:30', end: '18:30', place: 'Área externa do campus', responsible: 'A definir', email: '', spots: '20', audience: 'Todos os alunos', status: 'Inscrições abertas', photos: [] }
+    ]
+  };
+
+  renderVals() {
+    const s = this.state;
+    const set = (o) => this.setState(o);
+    const dayDefs = [['Seg', 'Segunda-feira'], ['Ter', 'Terça-feira'], ['Qua', 'Quarta-feira'], ['Qui', 'Quinta-feira'], ['Sex', 'Sexta-feira'], ['Sáb', 'Sábado']];
+    const categories = ['Esporte', 'Cultura e arte', 'Estudos', 'Jogos', 'Bem-estar', 'Outra'];
+    const needsSignup = s.form.signup !== 'nao';
+    const statuses = needsSignup ? ['Inscrições abertas', 'Inscrições encerradas', 'Inativa'] : ['Ativa', 'Inativa'];
+    const keys = ['name', 'category', 'description', 'start', 'end', 'place', 'responsible', 'email', 'spots', 'audience', 'status', 'signup'];
+
+    const emptyForm = () => ({ name: '', category: 'Esporte', description: '', start: '', end: '', place: '', responsible: '', email: '', spots: '', audience: 'Todos os alunos', status: 'Inscrições abertas', signup: 'sim' });
+
+    const openNew = () => set({ view: 'form', editingId: null, form: emptyForm(), formDays: [], photos: [], errors: {}, notice: '', deletingId: null });
+    const openEdit = (it) => {
+      const fm = {};
+      keys.forEach((k) => { fm[k] = it[k] !== undefined ? it[k] : (k === 'signup' ? 'sim' : ''); });
+      set({ view: 'form', editingId: it.id, form: fm, formDays: it.days.slice(), photos: (it.photos || []).slice(), errors: {}, notice: '', deletingId: null });
+    };
+
+    const base = 'box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border-radius:10px;font-size:15px;background:#FFFFFF;color:#1F2A24;border:1px solid ';
+    const mk = (key) => ({
+      value: s.form[key],
+      err: s.errors[key] || '',
+      errStyle: s.errors[key] ? 'margin:0;font-size:13px;color:#8A2E0B' : 'display:none',
+      inputStyle: base + (s.errors[key] ? '#8A2E0B' : '#B7C4BC'),
+      onChange: (e) => {
+        const v = e.target.value;
+        this.setState((st) => ({ form: { ...st.form, [key]: v }, errors: { ...st.errors, [key]: '' } }));
+      }
+    });
+    const f = {};
+    keys.forEach((k) => { f[k] = mk(k); });
+
+    const days = dayDefs.map((d) => {
+      const on = s.formDays.indexOf(d[0]) !== -1;
+      return {
+        short: d[0],
+        full: d[1],
+        checked: on,
+        style: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;border:2px solid ' + (on ? '#14703F' : '#B7C4BC') + ';background:' + (on ? '#DDF1E5' : '#FFFFFF') + ';color:#1F2A24',
+        toggle: () => this.setState((st) => ({
+          formDays: st.formDays.indexOf(d[0]) !== -1 ? st.formDays.filter((x) => x !== d[0]) : st.formDays.concat([d[0]]),
+          errors: { ...st.errors, days: '' }
+        }))
+      };
+    });
+
+    const save = () => {
+      const fm = s.form;
+      const errors = {};
+      const need = (k, msg) => { if (!String(fm[k] || '').trim()) errors[k] = msg; };
+      need('name', 'Informe o nome da atividade.');
+      need('description', 'Escreva uma descrição para a atividade.');
+      need('start', 'Informe o horário de início.');
+      need('place', 'Informe o local.');
+      need('responsible', 'Informe o docente responsável.');
+      need('audience', 'Informe quem pode participar.');
+      need('email', 'Informe um e-mail de contato.');
+      if (fm.signup !== 'nao') need('spots', 'Informe o número de vagas.');
+      if (!errors.email && !/^\S+@\S+\.\S+$/.test(fm.email.trim())) errors.email = 'Informe um e-mail válido.';
+      if (fm.signup !== 'nao' && !errors.spots) {
+        const n = Number(fm.spots);
+        if (!Number.isInteger(n) || n < 1) errors.spots = 'Use um número inteiro maior que zero.';
+      }
+      if (!errors.start && fm.end && fm.end <= fm.start) errors.end = 'O término deve ser depois do início.';
+      if (s.formDays.length === 0) errors.days = 'Escolha pelo menos um dia da semana.';
+      if (Object.keys(errors).length) { set({ errors: errors }); return; }
+
+      const record = {};
+      keys.forEach((k) => { record[k] = String(fm[k]).trim(); });
+      record.days = dayDefs.map((d) => d[0]).filter((d) => s.formDays.indexOf(d) !== -1);
+      record.photos = s.photos.slice();
+      if (record.signup === 'nao') record.spots = '';
+      if (s.editingId) {
+        this.setState((st) => ({
+          items: st.items.map((x) => (x.id === st.editingId ? { ...record, id: x.id } : x)),
+          view: 'list', editingId: null, notice: 'Atividade "' + record.name + '" atualizada.'
+        }));
+      } else {
+        this.setState((st) => ({
+          items: st.items.concat([{ ...record, id: st.nextId }]),
+          nextId: st.nextId + 1, view: 'list', notice: 'Atividade "' + record.name + '" criada.'
+        }));
+      }
+    };
+
+    const catColors = { 'Esporte': ['#FDE9C8', '#7A4300'], 'Cultura e arte': ['#EBDDF3', '#5B2A73'], 'Estudos': ['#E6E9F8', '#343E85'], 'Jogos': ['#DDF1E5', '#0F5A33'], 'Bem-estar': ['#F6E8E2', '#7A3A1F'], 'Outra': ['#EEF3F0', '#3C4741'] };
+    const statusColors = { 'Ativa': ['#14703F', '#FFFFFF'], 'Inscrições abertas': ['#14703F', '#FFFFFF'], 'Inscrições encerradas': ['#FDE9C8', '#7A4300'], 'Inativa': ['#EEF3F0', '#3C4741'] };
+    const chip = (c) => 'display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;background:' + c[0] + ';color:' + c[1];
+
+    const qn = s.q.trim().toLowerCase();
+    const visible = s.items.filter((it) => (!qn || (it.name + ' ' + it.responsible + ' ' + it.place).toLowerCase().indexOf(qn) !== -1) && (s.fCat === 'Todas' || it.category === s.fCat) && (s.fStatus === 'Todas' || it.status === s.fStatus));
+    const rows = visible.map((it) => ({
+      name: it.name,
+      photoCount: (it.photos || []).length === 0 ? 'Sem fotos' : (it.photos.length === 1 ? '1 foto' : it.photos.length + ' fotos'),
+      category: it.category,
+      catStyle: chip(catColors[it.category] || catColors['Outra']),
+      schedule: it.days.join(', ') + ' · ' + it.start + (it.end ? '–' + it.end : ''),
+      place: it.place,
+      responsible: it.responsible,
+      spots: it.signup === 'nao' ? 'Sem inscrição' : it.spots,
+      status: it.status,
+      statusStyle: chip(statusColors[it.status] || statusColors['Inativa']),
+      editLabel: 'Editar ' + it.name,
+      deleteLabel: 'Excluir ' + it.name,
+      isConfirming: s.deletingId === it.id,
+      notConfirming: s.deletingId !== it.id,
+      edit: () => openEdit(it),
+      ask: () => set({ deletingId: it.id, notice: '' }),
+      cancelDel: () => set({ deletingId: null }),
+      confirmDel: () => this.setState((st) => ({ items: st.items.filter((x) => x.id !== it.id), deletingId: null, notice: 'Atividade "' + it.name + '" excluída.' }))
+    }));
+
+    const setSignup = (v) => this.setState((st) => {
+      let status = st.form.status;
+      if (v === 'nao' && status !== 'Inativa') status = 'Ativa';
+      if (v === 'sim' && status === 'Ativa') status = 'Inscrições abertas';
+      return { form: { ...st.form, signup: v, status: status }, errors: { ...st.errors, spots: '' } };
+    });
+    const pill = (on) => 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;border:2px solid ' + (on ? '#14703F' : '#B7C4BC') + ';background:' + (on ? '#DDF1E5' : '#FFFFFF') + ';color:#1F2A24';
+    const errCount = Object.keys(s.errors).filter((k) => s.errors[k]).length;
+    const n = s.items.length;
+
+    return {
+      showList: s.view === 'list',
+      showForm: s.view === 'form',
+      notice: s.notice,
+      hasNotice: s.notice !== '',
+      rows: rows,
+      noItems: visible.length === 0,
+      emptyMsg: n === 0 ? 'Nenhuma atividade cadastrada. Clique em "Nova atividade" para começar.' : 'Nenhuma atividade encontrada com esses filtros.',
+      countText: visible.length + ' de ' + n + (n === 1 ? ' atividade' : ' atividades'),
+      q: s.q,
+      onQ: (e) => set({ q: e.target.value }),
+      fCat: s.fCat,
+      onCat: (e) => set({ fCat: e.target.value }),
+      fStatus: s.fStatus,
+      onStatus: (e) => set({ fStatus: e.target.value }),
+      catOptions: ['Todas'].concat(categories),
+      statusOptions: ['Todas', 'Inscrições abertas', 'Inscrições encerradas', 'Ativa', 'Inativa'],
+      openNew: openNew,
+      formTitle: s.editingId ? 'Editar atividade' : 'Nova atividade',
+      saveLabel: s.editingId ? 'Salvar alterações' : 'Criar atividade',
+      f: f,
+      categories: categories,
+      statuses: statuses,
+      spotsLabel: needsSignup ? 'Vagas *' : 'Vagas (não se aplica)',
+      spotsDisabled: !needsSignup,
+      signupYes: needsSignup,
+      signupNo: !needsSignup,
+      signupYesStyle: pill(needsSignup),
+      signupNoStyle: pill(!needsSignup),
+      setSignupYes: () => setSignup('sim'),
+      setSignupNo: () => setSignup('nao'),
+      days: days,
+      daysErr: s.errors.days || '',
+      daysErrStyle: s.errors.days ? 'margin:0;font-size:13px;color:#8A2E0B' : 'display:none',
+      hasErrors: errCount > 0,
+      errorSummary: errCount === 1 ? 'Corrija 1 campo para salvar.' : 'Corrija ' + errCount + ' campos para salvar.',
+      photoList: s.photos.map((name, idx) => ({
+        name: name,
+        cover: idx === 0 ? 'Capa' : 'Foto ' + (idx + 1),
+        removeLabel: 'Remover ' + name,
+        remove: () => this.setState((st) => ({ photos: st.photos.filter((x, k) => k !== idx) }))
+      })),
+      hasPhotos: s.photos.length > 0,
+      photoSummary: s.photos.length === 1 ? '1 foto adicionada' : s.photos.length + ' fotos adicionadas',
+      pickPhotos: (e) => {
+        const files = Array.from(e.target.files || []).map((x) => x.name);
+        if (files.length) set({ photos: s.photos.concat(files) });
+        e.target.value = '';
+      },
+      clearPhotos: () => set({ photos: [] }),
+      save: save,
+      cancel: () => set({ view: 'list', editingId: null, errors: {} })
+    };
+  }
+}
+</script>
+</body>
+</html>

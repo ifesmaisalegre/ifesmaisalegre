@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Cabeçalho do site</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+a:focus-visible,button:focus-visible{outline:3px solid #4A56A6;outline-offset:2px}
+</style>
+</helmet>
+<header style="background: #F0F4F4; font-family: 'Poppins', system-ui, sans-serif; font-size: 15px; line-height: 1.5; color: #1F2A24">
+  <div style="max-width: 1200px; margin: 0 auto; padding: 12px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+    <a href="Home.dc.html" aria-label="IFES+Alegre, ir para a página inicial" style="display: flex; align-items: center; gap: 10px; text-decoration: none">
+      <svg width="46" height="46" viewBox="0 0 52 52" aria-hidden="true"><g transform="translate(25 -3) scale(0.26)"><polygon points="50,0 61,30 90,15 70,40 100,50 70,60 90,85 61,70 50,100 39,70 10,85 30,60 0,50 30,40 10,15 39,30" fill="#DDA3F0"></polygon></g><g transform="translate(-2 28) scale(0.26)"><polygon points="50,0 61,30 90,15 70,40 100,50 70,60 90,85 61,70 50,100 39,70 10,85 30,60 0,50 30,40 10,15 39,30" fill="#DDA3F0"></polygon></g><g transform="translate(5 5)"><path d="M14 4h12v10h10v12H26v10H14V26H4V14h10z" fill="#F79005" stroke="#0F6B43" stroke-width="3.5" stroke-linejoin="round"></path></g></svg>
+      <span style="font-weight: 700; font-size: 20px; color: #0F6B43">IFES+Alegre</span>
+    </a>
+    <sc-if value="{{narrow}}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{toggle}}" aria-expanded="{{expanded}}" aria-controls="menu-principal" style="min-height: 44px; padding: 0 18px; border: 2px solid #0F6B43; border-radius: 10px; background: #FFFFFF; color: #0F6B43; font-size: 15px; font-weight: 600">{{menuLabel}}</button>
+    </sc-if>
+    <nav id="menu-principal" aria-label="Navegação principal" style="{{navStyle}}">
+      <sc-for list="{{links}}" as="l" hint-placeholder-count="6">
+        <a href="{{l.href}}" aria-current="{{l.current}}" style="{{l.style}}">{{l.label}}</a>
+      </sc-for>
+    </nav>
+  </div>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":null,"default":"home"},"$preview":{"width":1280,"height":80}}'>
+class Component extends DCLogic {
+  state = { narrow: false, open: false };
+
+  componentDidMount() {
+    this.onResize = () => {
+      const n = window.innerWidth < 840;
+      if (n !== this.state.narrow) this.setState({ narrow: n, open: false });
+    };
+    this.onResize();
+    window.addEventListener('resize', this.onResize);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onResize);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const active = this.props.active ?? 'home';
+    const defs = [
+      ['home', 'Home', 'Home.dc.html'],
+      ['atividades', 'Atividades', 'Atividades.dc.html'],
+      ['avisos', 'Avisos', 'Avisos.dc.html'],
+      ['galeria', 'Galeria', 'Galeria.dc.html'],
+      ['contatos', 'Contatos', 'Contatos.dc.html'],
+      ['docente', 'Área Docente', 'Main.dc.html']
+    ];
+    const links = defs.map((d) => {
+      const on = d[0] === active;
+      const base = s.narrow
+        ? 'display:flex;align-items:center;min-height:44px;padding:0 4px;font-size:16px;text-decoration:none;'
+        : 'padding:4px 0;font-size:14px;text-decoration:none;';
+      return {
+        label: d[1],
+        href: d[2],
+        current: on ? 'page' : 'false',
+        style: base + (on ? 'color:#9A4F00;font-weight:600;border-bottom:3px solid #F59E0B' : 'color:#3C4741')
+      };
+    });
+    let navStyle = 'display:flex;flex-wrap:wrap;align-items:center;gap:4px 22px';
+    if (s.narrow) navStyle = s.open ? 'display:flex;flex-direction:column;width:100%;gap:2px;padding-bottom:8px' : 'display:none';
+    return {
+      narrow: s.narrow,
+      expanded: s.open ? 'true' : 'false',
+      menuLabel: s.open ? 'Fechar menu' : 'Menu',
+      toggle: () => this.setState({ open: !s.open }),
+      navStyle: navStyle,
+      links: links
+    };
+  }
+}
+</script>
+</body>
+</html>

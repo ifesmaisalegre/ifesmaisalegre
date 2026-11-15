@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>IFES+Alegre — Galeria</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+a{color:#14703F}a:hover{color:#0D4F2C}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #4A56A6;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height: 100%; background: #FAFFFF; color: #1F2A24; font-family: 'Poppins', system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+
+  <dc-import name="Cabecalho" active="galeria" hint-size="1280,80"></dc-import>
+
+  <section style="position: relative; overflow: hidden; background: #14703F; color: #FFFFFF">
+    <svg width="110" height="110" viewBox="0 0 100 100" aria-hidden="true" style="position: absolute; right: 4%; top: 14px"><polygon points="50,0 61,30 90,15 70,40 100,50 70,60 90,85 61,70 50,100 39,70 10,85 30,60 0,50 30,40 10,15 39,30" fill="#DDA3F0"></polygon></svg>
+    <svg width="130" height="90" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; right: 16%; bottom: 0"><polygon points="0,100 50,0 100,100" fill="#F59E0B"></polygon></svg>
+    <div style="position: relative; max-width: 1200px; margin: 0 auto; padding: 44px 24px 48px">
+      <h1 style="margin: 0 0 10px; font-size: 38px; line-height: 1.15; font-weight: 700">Galeria de fotos</h1>
+      <p style="margin: 0; max-width: 640px; color: #E3F4EA">Fique por dentro das novidades e descubra todas as atividades ofertadas pelo campus. Venha fazer parte da história do IFES · Campus de Alegre!</p>
+    </div>
+  </section>
+
+  <main style="max-width: 1200px; margin: 0 auto; padding: 36px 24px 56px">
+
+    <div style="margin-bottom: 28px">
+      <button onClick="{{toggleForm}}" style="min-height: 48px; padding: 0 24px; border: 0; border-radius: 12px; background: #F59E0B; color: #1F2A24; font-size: 15px; font-weight: 600">Envie sua foto!</button>
+
+      <sc-if value="{{formOpen}}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 16px; max-width: 520px; background: #FFFFFF; border: 1px solid #E3ECE7; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 12px">
+          <h2 style="margin: 0; font-size: 17px; font-weight: 600">Enviar foto para avaliação</h2>
+          <p style="margin: 0; font-size: 14px; color: #5A6660">Os docentes avaliam a foto antes de ela aparecer na galeria.</p>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <label for="g-file" style="font-size: 13px; font-weight: 600; color: #3C4741">Escolha a foto</label>
+            <input id="g-file" type="file" accept="image/*" onChange="{{pickFile}}" style="font-size: 14px">
+          </div>
+          <div>
+            <label for="g-consent" style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 14px; color: #1F2A24; cursor: pointer"><input id="g-consent" type="checkbox" checked="{{consent}}" onChange="{{toggleConsent}}" style="width: 22px; height: 22px; margin: 1px 0 0; flex: 0 0 auto; accent-color: #14703F"><span>Autorizo a utilização e a publicação desta foto no site do IFES+Alegre. Se houver menores de 18 anos na foto, declaro ter a autorização dos responsáveis. <a href="Privacidade.dc.html">Política de privacidade</a>.</span></label>
+            <button onClick="{{sendPhoto}}" disabled="{{sendDisabled}}" style="{{sendStyle}}">Enviar para avaliação</button>
+            <p style="{{hintStyle}}">{{hint}}</p>
+          </div>
+          <sc-if value="{{sent}}" hint-placeholder-val="{{ false }}">
+            <p role="status" style="margin: 0; font-size: 14px; color: #0F5A33; background: #DDF1E5; border-radius: 10px; padding: 10px 12px">Foto enviada! Ela aparecerá na galeria depois da aprovação dos docentes.</p>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px">
+      <sc-for list="{{photos}}" as="p" hint-placeholder-count="7">
+        <figure style="flex: 1 1 240px; max-width: 380px; margin: 0; background: #FFFFFF; border: 1px solid #E3ECE7; border-radius: 16px; padding: 10px">
+          <div style="{{p.tile}}">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#3C4741" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Espaço da foto"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.8"></circle><path d="M21 16l-5-5-8 9"></path></svg>
+          </div>
+        </figure>
+      </sc-for>
+    </div>
+  </main>
+
+  <dc-import name="Rodape" hint-size="1280,340"></dc-import>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1300}}'>
+class Component extends DCLogic {
+  state = { formOpen: false, sent: false, consent: false, hasFile: false };
+
+  renderVals() {
+    const s = this.state;
+    const tones = ['#F6E8E2', '#E6E9F8', '#DDF1E5', '#FDE9C8', '#EBDDF3', '#F6E8E2', '#E6E9F8'];
+    return {
+      formOpen: s.formOpen,
+      sent: s.sent,
+      toggleForm: () => this.setState({ formOpen: !s.formOpen, sent: false, consent: false, hasFile: false }),
+      consent: s.consent,
+      toggleConsent: (e) => this.setState({ consent: !!e.target.checked, sent: false }),
+      pickFile: (e) => this.setState({ hasFile: !!(e.target.files && e.target.files.length > 0), sent: false }),
+      sendDisabled: !(s.consent && s.hasFile),
+      sendStyle: 'min-height:44px;padding:10px 20px;border-radius:10px;font-size:15px;font-weight:600;border:2px solid ' + (s.consent && s.hasFile ? '#14703F' : '#9AA8A0') + ';background:' + (s.consent && s.hasFile ? '#14703F' : '#DCE3DF') + ';color:' + (s.consent && s.hasFile ? '#FFFFFF' : '#3C4741') + ';cursor:' + (s.consent && s.hasFile ? 'pointer' : 'not-allowed'),
+      hint: !s.hasFile ? 'Escolha uma foto para poder enviar.' : (!s.consent ? 'Marque a autorização para poder enviar.' : ''),
+      hintStyle: s.consent && s.hasFile ? 'display:none' : 'margin:8px 0 0;font-size:13px;color:#5A6660',
+      sendPhoto: () => { if (s.consent && s.hasFile) this.setState({ sent: true }); },
+      photos: tones.map((c) => ({ tile: 'display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;border-radius:10px;background:' + c }))
+    };
+  }
+}
+</script>
+</body>
+</html>

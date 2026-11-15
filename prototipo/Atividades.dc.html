@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>IFES+Alegre — Atividades</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#14703F}a:hover{color:#0D4F2C}
+button{font-family:inherit}
+a:focus-visible,button:focus-visible{outline:3px solid #4A56A6;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height: 100%; background: #FAFFFF; color: #1F2A24; font-family: 'Poppins', system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+
+  <dc-import name="Cabecalho" active="atividades" hint-size="1280,80"></dc-import>
+
+  <section style="position: relative; overflow: hidden; background: #5F6DB5; color: #FFFFFF">
+    <svg width="110" height="110" viewBox="0 0 100 100" aria-hidden="true" style="position: absolute; right: 4%; top: 14px"><polygon points="50,0 61,30 90,15 70,40 100,50 70,60 90,85 61,70 50,100 39,70 10,85 30,60 0,50 30,40 10,15 39,30" fill="#DDA3F0"></polygon></svg>
+    <svg width="130" height="90" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; right: 16%; bottom: 0"><polygon points="0,100 50,0 100,100" fill="#F59E0B"></polygon></svg>
+    <div style="position: relative; max-width: 1200px; margin: 0 auto; padding: 44px 24px 48px">
+      <h1 style="margin: 0 0 10px; font-size: 38px; line-height: 1.15; font-weight: 700">Todas as atividades</h1>
+      <p style="margin: 0; max-width: 560px; color: #FFFFFF">Conheça as atividades ofertadas pelo campus!</p>
+    </div>
+  </section>
+
+  <main style="max-width: 1200px; margin: 0 auto; padding: 40px 24px 56px">
+    <div role="group" aria-label="Filtrar atividades por categoria" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="5">
+        <button onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="{{f.style}}">{{f.label}}</button>
+      </sc-for>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px">
+      <sc-for list="{{activities}}" as="a" hint-placeholder-count="7">
+        <a href="{{a.href}}" style="display: block; flex: 1 1 240px; max-width: 380px; text-decoration: none; color: #1F2A24; background: #FFFFFF; border: 1px solid #E3ECE7; border-radius: 16px; overflow: hidden">
+          <div style="{{a.tile}}">
+            <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><path d="M14 4h12v10h10v12H26v10H14V26H4V14h10z" fill="#FFFFFF" fill-opacity="0.75" stroke="#14703F" stroke-width="2.5" stroke-linejoin="round"></path></svg>
+          </div>
+          <div style="padding: 16px 20px 18px">
+            <h2 style="margin: 0 0 8px; font-size: 18px; font-weight: 600">{{a.name}}</h2>
+            <span style="display: inline-block; padding: 2px 10px; border-radius: 999px; background: #E6E9F8; color: #343E85; font-size: 12px; font-weight: 600">{{a.category}}</span>
+            <span style="{{a.signupStyle}}">{{a.signup}}</span>
+          </div>
+        </a>
+      </sc-for>
+    </div>
+    <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}"><p role="status" style="margin: 0; color: #5A6660">Nenhuma atividade nesta categoria.</p></sc-if>
+  </main>
+
+  <dc-import name="Rodape" hint-size="1280,340"></dc-import>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1200}}'>
+class Component extends DCLogic {
+  state = { cat: 'Todas' };
+
+  renderVals() {
+    const s = this.state;
+    const tile = (c) => 'display:flex;align-items:center;justify-content:center;height:170px;background:' + c;
+    const tones = ['#E6E9F8', '#FDE9C8', '#DDF1E5', '#F6E8E2', '#EBDDF3', '#FDE9C8', '#E6E9F8'];
+    const names = ['Clube do livro', 'Vôlei', 'Monitorias', 'Futebol', 'Clube de teatro', 'Clube de xadrez', 'Clube de corrida'];
+    const cats = ['Cultura e arte', 'Esporte', 'Estudos', 'Esporte', 'Cultura e arte', 'Jogos', 'Esporte'];
+    const free = [false, false, true, false, false, false, false];
+    const all = names.map((n, i) => ({
+      name: n, category: cats[i],
+      href: ['Atividade-livro', 'Atividade-volei', 'Atividade-monitorias', 'Atividade-futebol', 'Atividade-teatro', 'Atividade-xadrez', 'Atividade-corrida'][i] + '.dc.html',
+      tile: tile(tones[i]),
+      signup: free[i] ? 'Sem inscrição' : 'Com inscrição',
+      signupStyle: 'display:inline-block;margin-left:6px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;' + (free[i] ? 'background:#DDF1E5;color:#0F5A33' : 'background:#FDE9C8;color:#7A4300')
+    }));
+    const list = s.cat === 'Todas' ? all : all.filter((a) => a.category === s.cat);
+    return {
+      activities: list,
+      empty: list.length === 0,
+      filters: ['Todas', 'Esporte', 'Cultura e arte', 'Estudos', 'Jogos'].map((c) => {
+        const on = s.cat === c;
+        return { label: c, pressed: on ? 'true' : 'false', pick: () => this.setState({ cat: c }), style: 'min-height:44px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;border:2px solid #14703F;background:' + (on ? '#14703F' : '#FFFFFF') + ';color:' + (on ? '#FFFFFF' : '#14703F') };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>IFES+Alegre — Monitorias</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#14703F}a:hover{color:#0D4F2C}
+a:focus-visible{outline:3px solid #4A56A6;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height: 100%; background: #FAFFFF; color: #1F2A24; font-family: 'Poppins', system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+
+  <dc-import name="Cabecalho" active="atividades" hint-size="1280,80"></dc-import>
+
+  <section style="position: relative; overflow: hidden; background: #5F6DB5; color: #FFFFFF">
+    <svg width="110" height="110" viewBox="0 0 100 100" aria-hidden="true" style="position: absolute; right: 4%; top: 14px"><polygon points="50,0 61,30 90,15 70,40 100,50 70,60 90,85 61,70 50,100 39,70 10,85 30,60 0,50 30,40 10,15 39,30" fill="#DDA3F0"></polygon></svg>
+    <svg width="130" height="90" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; right: 16%; bottom: 0"><polygon points="0,100 50,0 100,100" fill="#F9A100"></polygon></svg>
+    <div style="position: relative; max-width: 1200px; margin: 0 auto; padding: 32px 24px 44px">
+      <a href="Atividades.dc.html" style="display: inline-block; margin-bottom: 14px; color: #FFFFFF; font-size: 14px; font-weight: 600">← Todas as atividades</a>
+      <div><span style="display: inline-block; padding: 2px 12px; border-radius: 999px; background: #FFFFFF; color: #343E85; font-size: 12px; font-weight: 600">Estudos</span></div>
+      <h1 style="margin: 8px 0 0; font-size: 40px; line-height: 1.15; font-weight: 700">Monitorias</h1>
+    </div>
+  </section>
+
+  <section style="background: #FAFFFF">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 44px 24px 36px; text-align: center">
+      <p style="margin: 0 auto; max-width: 740px; font-size: 18px; line-height: 1.6; color: #2B3630">A monitoria é um ambiente que oferece apoio aos alunos em diferentes disciplinas. Ficou com alguma dúvida nas matérias escolares? Venha saná-las na monitoria! Reforce seu aprendizado e seja um(a) estudante nota 1000.</p>
+      <p style="margin: 18px 0 0"><span style="display: inline-block; padding: 6px 16px; border-radius: 999px; background: #DDF1E5; color: #0F5A33; font-size: 14px; font-weight: 600">Participação livre: não precisa de inscrição prévia</span></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="ano1" style="background: #FDFDF1; border-top: 1px solid #ECEBD0">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 48px 24px 56px">
+      <h2 id="ano1" style="margin: 0 0 24px; text-align: center; font-size: 28px; font-weight: 700; color: #343E85">Horários 1º ano</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px">
+        <sc-for list="{{year1}}" as="m" hint-placeholder-count="8">
+          <article style="background: #FFFFFF; border: 1px solid #ECEBD0; border-radius: 16px; padding: 22px">
+            <span style="display: inline-block; margin-bottom: 10px; padding: 2px 10px; border-radius: 999px; background: #DDF1E5; color: #0F5A33; font-size: 12px; font-weight: 600">{{m.day}}</span>
+            <h3 style="margin: 0 0 8px; font-size: 19px; line-height: 1.3; font-weight: 600">{{m.title}}</h3>
+            <sc-if value="{{m.hasExclusive}}" hint-placeholder-val="{{ false }}">
+              <p style="margin: 0 0 8px"><span style="display: inline-block; padding: 2px 10px; border-radius: 999px; background: #FDE9C8; color: #7A4300; font-size: 12px; font-weight: 600">{{m.exclusive}}</span></p>
+            </sc-if>
+            <p style="margin: 0; font-size: 14px; color: #2B3630">{{m.time}}</p>
+            <p style="margin: 0; font-size: 14px; color: #2B3630">{{m.place}}</p>
+            <p style="margin: 0; font-size: 14px; color: #2B3630">Monitor(a): {{m.monitor}}</p>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="ano2" style="background: #F4E9F9">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 48px 24px 56px">
+      <h2 id="ano2" style="margin: 0 0 24px; text-align: center; font-size: 28px; font-weight: 700; color: #343E85">Horários 2º ano</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px">
+        <sc-for list="{{year2}}" as="m" hint-placeholder-count="5">
+          <article style="background: #FFFFFF; border-radius: 16px; padding: 22px">
+            <span style="display: inline-block; margin-bottom: 10px; padding: 2px 10px; border-radius: 999px; background: #E6E9F8; color: #343E85; font-size: 12px; font-weight: 600">{{m.day}}</span>
+            <h3 style="margin: 0 0 8px; font-size: 19px; line-height: 1.3; font-weight: 600">{{m.title}}</h3>
+            <sc-if value="{{m.hasExclusive}}" hint-placeholder-val="{{ false }}">
+              <p style="margin: 0 0 8px"><span style="display: inline-block; padding: 2px 10px; border-radius: 999px; background: #FDE9C8; color: #7A4300; font-size: 12px; font-weight: 600">{{m.exclusive}}</span></p>
+            </sc-if>
+            <p style="margin: 0; font-size: 14px; color: #2B3630">{{m.time}}</p>
+            <p style="margin: 0; font-size: 14px; color: #2B3630">{{m.place}}</p>
+            <p style="margin: 0; font-size: 14px; color: #2B3630">Monitor(a): {{m.monitor}}</p>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="ano3" style="background: #E6E9F8">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 48px 24px 56px">
+      <h2 id="ano3" style="margin: 0 0 24px; text-align: center; font-size: 28px; font-weight: 700; color: #343E85">Horários 3º ano</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px">
+        <sc-for list="{{year3}}" as="m" hint-placeholder-count="6">
+          <article style="background: #FFFFFF; border-radius: 16px; padding: 22px">
+            <span style="display: inline-block; margin-bottom: 10px; padding: 2px 10px; border-radius: 999px; background: #F6E8E2; color: #7A3A1F; font-size: 12px; font-weight: 600">{{m.day}}</span>
+            <h3 style="margin: 0 0 8px; font-size: 19px; line-height: 1.3; font-weight: 600">{{m.title}}</h3>
+            <sc-if value="{{m.hasExclusive}}" hint-placeholder-val="{{ false }}">
+              <p style="margin: 0 0 8px"><span style="display: inline-block; padding: 2px 10px; border-radius: 999px; background: #FDE9C8; color: #7A4300; font-size: 12px; font-weight: 600">{{m.exclusive}}</span></p>
+            </sc-if>
+            <p style="margin: 0; font-size: 14px; color: #2B3630">{{m.time}}</p>
+            <p style="margin: 0; font-size: 14px; color: #2B3630">{{m.place}}</p>
+            <p style="margin: 0; font-size: 14px; color: #2B3630">Monitor(a): {{m.monitor}}</p>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <dc-import name="Rodape" hint-size="1280,340"></dc-import>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":2300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const c = (title, excl, day, time, place, monitor) => ({ title: title, exclusive: excl, hasExclusive: excl !== '', day: day, time: time, place: place, monitor: monitor });
+    const T = '15h40 às 16h30';
+    return {
+      year1: [
+        c('Artes I', '', '2ª feira', T, 'Bloco C – Sala 2', 'Alice Duarte Calvi'),
+        c('Filosofia I', '', '2ª feira', T, 'Bloco C – Sala 2', 'Alice Duarte Calvi'),
+        c('Física I', '', '3ª feira', T, 'Bloco C – Sala 3', 'Emanuele Marinho da Silva'),
+        c('Química I', '', '4ª feira', T, 'Bloco C – Sala 3', 'Isabella Cristina Pontini Schimidt'),
+        c('Inglês I', '', '3ª feira', T, 'Bloco C – Sala 2', 'Aira Micaela Ribeiro Montozo'),
+        c('Matemática I', 'Exclusiva para 1º TAI I, II e III', '4ª feira', T, 'Bloco C – Sala 4', 'Mateus Valadares'),
+        c('Introdução à Programação', 'Exclusiva para 1º TII', '3ª feira', T, 'Lab. de Informática 1', 'Maria Eduarda da Silva Valadares'),
+        c('Matemática I', 'Exclusiva para 1º TII', '5ª feira', T, 'Bloco C – Sala 2', 'Bernardo Santiago da Vitória')
+      ],
+      year2: [
+        c('Física II', '', '2ª feira', T, 'Bloco C – Sala 3', 'Davi Rodrigues Rossi Machado'),
+        c('Matemática II', 'Exclusiva para 2ºTII e 2ºTGI', '5ª feira', T, 'Bloco C – Sala 2', 'Bernardo Santiago da Vitória'),
+        c('Inglês II', '', '3ª feira', T, 'Bloco C – Sala 2', 'Aira Micaela Ribeiro Montozo'),
+        c('Gestão Agropecuária I', 'Exclusiva para 2ºTAIs', '5ª feira', T, 'Bloco C – Sala 3', 'Maria Gabrielly Duarte Serafim'),
+        c('Programação II', 'Exclusiva para 2ºTII', '3ª e 5ª feira', T, 'Lab. de Informática 1', 'Maria Eduarda da Silva Valadares')
+      ],
+      year3: [
+        c('Matemática III', '', '3ª feira', T, 'Bloco C – Sala 4', 'Eduardo Duarte Rodrigues'),
+        c('Matemática III', 'Exclusiva para 3ºTII', '2ª feira', '14h40 às 15h30', 'Informática Sala 10', 'Mateus Moreira Mendes'),
+        c('Inglês III', '', '3ª feira', T, 'Bloco C – Sala 2', 'Aira Micaela Ribeiro Montozo'),
+        c('Matemática III', 'Exclusiva para 3ºTGI', '5ª feira', T, 'Bloco C – Sala 2', 'Bernardo Santiago da Vitória'),
+        c('Química III', '', '4ª feira', T, 'Bloco C – Sala 2', 'Gustavo Tristão Pinto'),
+        c('Gestão Agropecuária II', 'Exclusiva para 3ºTAIs', '5ª feira', T, 'Bloco C – Sala 3', 'Maria Gabrielly Duarte Serafim')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Área Docente — Monitorias</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit}
+a{color:#14703F}a:hover{color:#0D4F2C}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #4A56A6;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height: 100%; background: #FAFFFF; color: #1F2A24; font-family: 'Poppins', system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+
+  <dc-import name="Cabecalho" active="docente" hint-size="1280,80"></dc-import>
+
+  <section style="position: relative; overflow: hidden; background: #5F6DB5; color: #FFFFFF">
+    <svg width="110" height="110" viewBox="0 0 100 100" aria-hidden="true" style="position: absolute; right: 4%; top: 14px"><polygon points="50,0 61,30 90,15 70,40 100,50 70,60 90,85 61,70 50,100 39,70 10,85 30,60 0,50 30,40 10,15 39,30" fill="#DDA3F0"></polygon></svg>
+    <svg width="130" height="90" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; right: 16%; bottom: 0"><polygon points="0,100 50,0 100,100" fill="#F9A100"></polygon></svg>
+    <div style="position: relative; max-width: 1200px; margin: 0 auto; padding: 36px 24px 44px">
+      <p style="margin: 0 0 6px; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase">Área Docente</p>
+      <h1 style="margin: 0 0 10px; font-size: 38px; line-height: 1.15; font-weight: 700">Gerenciar monitorias</h1>
+      <p style="margin: 0; max-width: 600px">Cadastre e atualize os horários de monitoria de cada disciplina.</p>
+    </div>
+  </section>
+
+  <main style="max-width: 1200px; margin: 0 auto; padding: 28px 24px 56px">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px">
+      <span style="display: flex; flex-wrap: wrap; gap: 8px 20px"><a href="Main.dc.html" style="font-weight: 600">← Voltar ao painel</a><a href="AdminAtividades.dc.html" style="font-weight: 600">Gerenciar atividades →</a></span>
+      <sc-if value="{{showList}}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{openNew}}" style="min-height: 48px; padding: 0 24px; border: 2px solid #14703F; border-radius: 10px; background: #14703F; color: #FFFFFF; font-size: 15px; font-weight: 600">+ Nova monitoria</button>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{hasNotice}}" hint-placeholder-val="{{ false }}">
+      <p role="status" style="margin: 0 0 16px; font-size: 14px; color: #0F5A33; background: #DDF1E5; border-radius: 10px; padding: 12px 14px">{{notice}}</p>
+    </sc-if>
+
+    <sc-if value="{{showList}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; margin-bottom: 14px">
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; flex: 1 1 400px">
+          <div style="flex: 2 1 220px; display: flex; flex-direction: column; gap: 4px">
+            <label for="m-q" style="font-size: 13px; font-weight: 600; color: #3C4741">Buscar</label>
+            <input id="m-q" type="search" value="{{q}}" onInput="{{onQ}}" placeholder="Disciplina ou monitor(a)" style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 10px; font-size: 15px; background: #FFFFFF; color: #1F2A24; border: 1px solid #B7C4BC">
+          </div>
+          <div style="flex: 1 1 140px; display: flex; flex-direction: column; gap: 4px">
+            <label for="m-y" style="font-size: 13px; font-weight: 600; color: #3C4741">Ano</label>
+            <select id="m-y" value="{{fYear}}" onChange="{{onYear}}" style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 10px; font-size: 15px; background: #FFFFFF; color: #1F2A24; border: 1px solid #B7C4BC">
+              <sc-for list="{{yearFilter}}" as="y" hint-placeholder-count="4"><option value="{{y.value}}">{{y.label}}</option></sc-for>
+            </select>
+          </div>
+        </div>
+        <p role="status" style="margin: 0; font-size: 14px; color: #3C4741; font-weight: 500">{{countText}}</p>
+      </div>
+      <div style="overflow-x: auto; background: #FFFFFF; border: 1px solid #E3ECE7; border-radius: 16px">
+        <div style="min-width: 980px">
+          <div style="display: grid; grid-template-columns: 1.6fr 0.6fr 1.6fr 1.1fr 1.2fr 1.5fr 1.6fr; gap: 12px; padding: 12px 20px; background: #EEF3F0; border-radius: 16px 16px 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #3C4741">
+            <span>Disciplina</span><span>Ano</span><span>Turma exclusiva</span><span>Dia e horário</span><span>Local</span><span>Monitor(a)</span><span>Ações</span>
+          </div>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+            <div style="display: grid; grid-template-columns: 1.6fr 0.6fr 1.6fr 1.1fr 1.2fr 1.5fr 1.6fr; gap: 12px; padding: 14px 20px; border-top: 1px solid #E3ECE7; font-size: 14px; align-items: center">
+              <span style="font-weight: 600">{{r.title}}</span>
+              <span>{{r.year}}º</span>
+              <span>{{r.excl}}</span>
+              <span>{{r.when}}</span>
+              <span>{{r.place}}</span>
+              <span>{{r.monitor}}</span>
+              <span>
+                <sc-if value="{{r.notConfirming}}" hint-placeholder-val="{{ true }}">
+                  <span style="display: flex; flex-wrap: wrap; gap: 8px">
+                    <button onClick="{{r.edit}}" aria-label="{{r.editLabel}}" style="min-height: 44px; padding: 0 14px; border: 2px solid #14703F; border-radius: 10px; background: #FFFFFF; color: #14703F; font-size: 14px; font-weight: 600">Editar</button>
+                    <button onClick="{{r.ask}}" aria-label="{{r.deleteLabel}}" style="min-height: 44px; padding: 0 14px; border: 2px solid #8A2E0B; border-radius: 10px; background: #FFFFFF; color: #8A2E0B; font-size: 14px; font-weight: 600">Excluir</button>
+                  </span>
+                </sc-if>
+                <sc-if value="{{r.isConfirming}}" hint-placeholder-val="{{ false }}">
+                  <span style="display: flex; flex-direction: column; gap: 6px">
+                    <span style="font-size: 13px; font-weight: 600; color: #8A2E0B">Excluir esta monitoria?</span>
+                    <span style="display: flex; flex-wrap: wrap; gap: 8px">
+                      <button onClick="{{r.confirmDel}}" style="min-height: 44px; padding: 0 14px; border: 2px solid #8A2E0B; border-radius: 10px; background: #8A2E0B; color: #FFFFFF; font-size: 14px; font-weight: 600">Sim, excluir</button>
+                      <button onClick="{{r.cancelDel}}" style="min-height: 44px; padding: 0 14px; border: 2px solid #3C4741; border-radius: 10px; background: #FFFFFF; color: #3C4741; font-size: 14px; font-weight: 600">Cancelar</button>
+                    </span>
+                  </span>
+                </sc-if>
+              </span>
+            </div>
+          </sc-for>
+          <sc-if value="{{noItems}}" hint-placeholder-val="{{ false }}">
+            <p style="margin: 0; padding: 24px 20px; color: #5A6660">{{emptyMsg}}</p>
+          </sc-if>
+        </div>
+      </div>
+      <p style="margin: 12px 0 0; font-size: 13px; color: #5A6660">As monitorias aparecem na página Monitorias, separadas por ano.</p>
+    </sc-if>
+
+    <sc-if value="{{showForm}}" hint-placeholder-val="{{ false }}">
+      <div style="background: #FFFFFF; border: 1px solid #E3ECE7; border-radius: 16px; padding: 28px; max-width: 860px">
+        <h2 style="margin: 0 0 4px; font-size: 22px; font-weight: 600">{{formTitle}}</h2>
+        <p style="margin: 0 0 20px; font-size: 14px; color: #5A6660">Os campos marcados com * são obrigatórios.</p>
+        <sc-if value="{{hasErrors}}" hint-placeholder-val="{{ false }}">
+          <p role="alert" style="margin: 0 0 18px; font-size: 14px; color: #8A2E0B; background: #FBDDD0; border-radius: 10px; padding: 12px 14px">{{errorSummary}}</p>
+        </sc-if>
+        <div style="display: flex; flex-wrap: wrap; gap: 18px">
+          <div style="flex: 2 1 300px; display: flex; flex-direction: column; gap: 6px">
+            <label for="mm-title" style="font-size: 13px; font-weight: 600; color: #3C4741">Disciplina *</label>
+            <input id="mm-title" type="text" value="{{f.title.value}}" onChange="{{f.title.onChange}}" style="{{f.title.inputStyle}}">
+            <p style="{{f.title.errStyle}}">{{f.title.err}}</p>
+          </div>
+          <div style="flex: 1 1 140px; display: flex; flex-direction: column; gap: 6px">
+            <label for="mm-year" style="font-size: 13px; font-weight: 600; color: #3C4741">Ano *</label>
+            <select id="mm-year" value="{{f.year.value}}" onChange="{{f.year.onChange}}" style="{{f.year.inputStyle}}">
+              <option value="1">1º ano</option><option value="2">2º ano</option><option value="3">3º ano</option>
+            </select>
+          </div>
+          <div style="flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px">
+            <label for="mm-excl" style="font-size: 13px; font-weight: 600; color: #3C4741">Turma exclusiva (opcional)</label>
+            <input id="mm-excl" type="text" value="{{f.excl.value}}" onChange="{{f.excl.onChange}}" placeholder="Ex.: Exclusiva para 3ºTII" style="{{f.excl.inputStyle}}">
+          </div>
+          <fieldset style="flex: 1 1 100%; margin: 0; padding: 0; border: 0">
+            <legend style="padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #3C4741">Dias da semana *</legend>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <sc-for list="{{days}}" as="d" hint-placeholder-count="5">
+                <label style="{{d.style}}"><input type="checkbox" checked="{{d.checked}}" onChange="{{d.toggle}}" aria-label="{{d.full}}" style="width: 18px; height: 18px; margin: 0; accent-color: #14703F"><span>{{d.short}}</span></label>
+              </sc-for>
+            </div>
+            <p style="{{daysErrStyle}}">{{daysErr}}</p>
+          </fieldset>
+          <div style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 6px">
+            <label for="mm-start" style="font-size: 13px; font-weight: 600; color: #3C4741">Início *</label>
+            <input id="mm-start" type="time" value="{{f.start.value}}" onChange="{{f.start.onChange}}" style="{{f.start.inputStyle}}">
+            <p style="{{f.start.errStyle}}">{{f.start.err}}</p>
+          </div>
+          <div style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 6px">
+            <label for="mm-end" style="font-size: 13px; font-weight: 600; color: #3C4741">Término *</label>
+            <input id="mm-end" type="time" value="{{f.end.value}}" onChange="{{f.end.onChange}}" style="{{f.end.inputStyle}}">
+            <p style="{{f.end.errStyle}}">{{f.end.err}}</p>
+          </div>
+          <div style="flex: 2 1 260px; display: flex; flex-direction: column; gap: 6px">
+            <label for="mm-place" style="font-size: 13px; font-weight: 600; color: #3C4741">Local *</label>
+            <input id="mm-place" type="text" value="{{f.place.value}}" onChange="{{f.place.onChange}}" placeholder="Ex.: Bloco C – Sala 2" style="{{f.place.inputStyle}}">
+            <p style="{{f.place.errStyle}}">{{f.place.err}}</p>
+          </div>
+          <div style="flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px">
+            <label for="mm-mon" style="font-size: 13px; font-weight: 600; color: #3C4741">Monitor(a) *</label>
+            <input id="mm-mon" type="text" value="{{f.monitor.value}}" onChange="{{f.monitor.onChange}}" style="{{f.monitor.inputStyle}}">
+            <p style="{{f.monitor.errStyle}}">{{f.monitor.err}}</p>
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px">
+          <button onClick="{{save}}" style="min-height: 48px; padding: 0 28px; border: 2px solid #14703F; border-radius: 10px; background: #14703F; color: #FFFFFF; font-size: 15px; font-weight: 600">{{saveLabel}}</button>
+          <button onClick="{{cancel}}" style="min-height: 48px; padding: 0 28px; border: 2px solid #3C4741; border-radius: 10px; background: #FFFFFF; color: #3C4741; font-size: 15px; font-weight: 600">Cancelar</button>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+
+  <dc-import name="Rodape" hint-size="1280,340"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1900}}'>
+class Component extends DCLogic {
+  state = {
+    view: 'list', editingId: null, deletingId: null, notice: '', nextId: 20,
+    form: {}, formDays: [], errors: {}, q: '', fYear: 'all',
+    items: (() => {
+      const m = (id, title, year, excl, days, start, end, place, monitor) => ({ id: id, title: title, year: String(year), excl: excl, days: days, start: start, end: end, place: place, monitor: monitor });
+      const S = '15:40', E = '16:30';
+      return [
+        m(1, 'Artes I', 1, '', ['Seg'], S, E, 'Bloco C – Sala 2', 'Alice Duarte Calvi'),
+        m(2, 'Filosofia I', 1, '', ['Seg'], S, E, 'Bloco C – Sala 2', 'Alice Duarte Calvi'),
+        m(3, 'Física I', 1, '', ['Ter'], S, E, 'Bloco C – Sala 3', 'Emanuele Marinho da Silva'),
+        m(4, 'Química I', 1, '', ['Qua'], S, E, 'Bloco C – Sala 3', 'Isabella Cristina Pontini Schimidt'),
+        m(5, 'Inglês I', 1, '', ['Ter'], S, E, 'Bloco C – Sala 2', 'Aira Micaela Ribeiro Montozo'),
+        m(6, 'Matemática I', 1, 'Exclusiva para 1º TAI I, II e III', ['Qua'], S, E, 'Bloco C – Sala 4', 'Mateus Valadares'),
+        m(7, 'Introdução à Programação', 1, 'Exclusiva para 1º TII', ['Ter'], S, E, 'Lab. de Informática 1', 'Maria Eduarda da Silva Valadares'),
+        m(8, 'Matemática I', 1, 'Exclusiva para 1º TII', ['Qui'], S, E, 'Bloco C – Sala 2', 'Bernardo Santiago da Vitória'),
+        m(9, 'Física II', 2, '', ['Seg'], S, E, 'Bloco C – Sala 3', 'Davi Rodrigues Rossi Machado'),
+        m(10, 'Matemática II', 2, 'Exclusiva para 2ºTII e 2ºTGI', ['Qui'], S, E, 'Bloco C – Sala 2', 'Bernardo Santiago da Vitória'),
+        m(11, 'Inglês II', 2, '', ['Ter'], S, E, 'Bloco C – Sala 2', 'Aira Micaela Ribeiro Montozo'),
+        m(12, 'Gestão Agropecuária I', 2, 'Exclusiva para 2ºTAIs', ['Qui'], S, E, 'Bloco C – Sala 3', 'Maria Gabrielly Duarte Serafim'),
+        m(13, 'Programação II', 2, 'Exclusiva para 2ºTII', ['Ter', 'Qui'], S, E, 'Lab. de Informática 1', 'Maria Eduarda da Silva Valadares'),
+        m(14, 'Matemática III', 3, '', ['Ter'], S, E, 'Bloco C – Sala 4', 'Eduardo Duarte Rodrigues'),
+        m(15, 'Matemática III', 3, 'Exclusiva para 3ºTII', ['Seg'], '14:40', '15:30', 'Informática Sala 10', 'Mateus Moreira Mendes'),
+        m(16, 'Inglês III', 3, '', ['Ter'], S, E, 'Bloco C – Sala 2', 'Aira Micaela Ribeiro Montozo'),
+        m(17, 'Matemática III', 3, 'Exclusiva para 3ºTGI', ['Qui'], S, E, 'Bloco C – Sala 2', 'Bernardo Santiago da Vitória'),
+        m(18, 'Química III', 3, '', ['Qua'], S, E, 'Bloco C – Sala 2', 'Gustavo Tristão Pinto'),
+        m(19, 'Gestão Agropecuária II', 3, 'Exclusiva para 3ºTAIs', ['Qui'], S, E, 'Bloco C – Sala 3', 'Maria Gabrielly Duarte Serafim')
+      ];
+    })()
+  };
+
+  renderVals() {
+    const s = this.state;
+    const set = (o) => this.setState(o);
+    const dayDefs = [['Seg', '2ª feira', 'Segunda-feira'], ['Ter', '3ª feira', 'Terça-feira'], ['Qua', '4ª feira', 'Quarta-feira'], ['Qui', '5ª feira', 'Quinta-feira'], ['Sex', '6ª feira', 'Sexta-feira']];
+    const keys = ['title', 'year', 'excl', 'start', 'end', 'place', 'monitor'];
+    const fmtTime = (t) => t.replace(':', 'h');
+    const when = (it) => dayDefs.filter((d) => it.days.indexOf(d[0]) !== -1).map((d) => d[1].replace(' feira', '')).join(' e ') + ' feira · ' + fmtTime(it.start) + ' às ' + fmtTime(it.end);
+
+    const openNew = () => set({ view: 'form', editingId: null, form: { title: '', year: '1', excl: '', start: '15:40', end: '16:30', place: '', monitor: '' }, formDays: [], errors: {}, notice: '', deletingId: null });
+    const openEdit = (it) => {
+      const fm = {};
+      keys.forEach((k) => { fm[k] = it[k]; });
+      set({ view: 'form', editingId: it.id, form: fm, formDays: it.days.slice(), errors: {}, notice: '', deletingId: null });
+    };
+
+    const base = 'box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border-radius:10px;font-size:15px;background:#FFFFFF;color:#1F2A24;border:1px solid ';
+    const mk = (key) => ({
+      value: s.form[key],
+      err: s.errors[key] || '',
+      errStyle: s.errors[key] ? 'margin:0;font-size:13px;color:#8A2E0B' : 'display:none',
+      inputStyle: base + (s.errors[key] ? '#8A2E0B' : '#B7C4BC'),
+      onChange: (e) => { const v = e.target.value; this.setState((st) => ({ form: { ...st.form, [key]: v }, errors: { ...st.errors, [key]: '' } })); }
+    });
+    const f = {};
+    keys.forEach((k) => { f[k] = mk(k); });
+
+    const days = dayDefs.map((d) => {
+      const on = s.formDays.indexOf(d[0]) !== -1;
+      return {
+        short: d[0], full: d[2], checked: on,
+        style: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;border:2px solid ' + (on ? '#14703F' : '#B7C4BC') + ';background:' + (on ? '#DDF1E5' : '#FFFFFF') + ';color:#1F2A24',
+        toggle: () => this.setState((st) => ({ formDays: st.formDays.indexOf(d[0]) !== -1 ? st.formDays.filter((x) => x !== d[0]) : st.formDays.concat([d[0]]), errors: { ...st.errors, days: '' } }))
+      };
+    });
+
+    const save = () => {
+      const fm = s.form;
+      const errors = {};
+      const need = (k, msg) => { if (!String(fm[k] || '').trim()) errors[k] = msg; };
+      need('title', 'Informe a disciplina.');
+      need('start', 'Informe o horário de início.');
+      need('end', 'Informe o horário de término.');
+      need('place', 'Informe o local.');
+      need('monitor', 'Informe o(a) monitor(a).');
+      if (!errors.start && !errors.end && fm.end <= fm.start) errors.end = 'O término deve ser depois do início.';
+      if (s.formDays.length === 0) errors.days = 'Escolha pelo menos um dia.';
+      if (Object.keys(errors).length) { set({ errors: errors }); return; }
+      const record = {};
+      keys.forEach((k) => { record[k] = String(fm[k]).trim(); });
+      record.days = dayDefs.map((d) => d[0]).filter((d) => s.formDays.indexOf(d) !== -1);
+      if (s.editingId) {
+        this.setState((st) => ({ items: st.items.map((x) => (x.id === st.editingId ? { ...record, id: x.id } : x)), view: 'list', editingId: null, notice: 'Monitoria de "' + record.title + '" atualizada.' }));
+      } else {
+        this.setState((st) => ({ items: st.items.concat([{ ...record, id: st.nextId }]), nextId: st.nextId + 1, view: 'list', notice: 'Monitoria de "' + record.title + '" criada.' }));
+      }
+    };
+
+    const qn = s.q.trim().toLowerCase();
+    const visible = s.items.filter((it) => (!qn || (it.title + ' ' + it.monitor).toLowerCase().indexOf(qn) !== -1) && (s.fYear === 'all' || it.year === s.fYear));
+    const rows = visible.map((it) => ({
+      title: it.title, year: it.year, excl: it.excl || 'Todas as turmas', when: when(it), place: it.place, monitor: it.monitor,
+      editLabel: 'Editar ' + it.title + ' ' + it.year + 'º ano', deleteLabel: 'Excluir ' + it.title + ' ' + it.year + 'º ano',
+      isConfirming: s.deletingId === it.id, notConfirming: s.deletingId !== it.id,
+      edit: () => openEdit(it),
+      ask: () => set({ deletingId: it.id, notice: '' }),
+      cancelDel: () => set({ deletingId: null }),
+      confirmDel: () => this.setState((st) => ({ items: st.items.filter((x) => x.id !== it.id), deletingId: null, notice: 'Monitoria de "' + it.title + '" excluída.' }))
+    }));
+    const errCount = Object.keys(s.errors).filter((k) => s.errors[k]).length;
+    const n = s.items.length;
+
+    return {
+      showList: s.view === 'list', showForm: s.view === 'form',
+      notice: s.notice, hasNotice: s.notice !== '',
+      rows: rows, noItems: visible.length === 0,
+      emptyMsg: n === 0 ? 'Nenhuma monitoria cadastrada.' : 'Nenhuma monitoria encontrada com esses filtros.',
+      countText: visible.length + ' de ' + n + (n === 1 ? ' monitoria' : ' monitorias'),
+      q: s.q, onQ: (e) => set({ q: e.target.value }),
+      fYear: s.fYear, onYear: (e) => set({ fYear: e.target.value }),
+      yearFilter: [{ value: 'all', label: 'Todos' }, { value: '1', label: '1º ano' }, { value: '2', label: '2º ano' }, { value: '3', label: '3º ano' }],
+      openNew: openNew,
+      formTitle: s.editingId ? 'Editar monitoria' : 'Nova monitoria',
+      saveLabel: s.editingId ? 'Salvar alterações' : 'Criar monitoria',
+      f: f, days: days,
+      daysErr: s.errors.days || '',
+      daysErrStyle: s.errors.days ? 'margin:0;font-size:13px;color:#8A2E0B' : 'display:none',
+      hasErrors: errCount > 0,
+      errorSummary: errCount === 1 ? 'Corrija 1 campo para salvar.' : 'Corrija ' + errCount + ' campos para salvar.',
+      save: save,
+      cancel: () => set({ view: 'list', editingId: null, errors: {} })
+    };
+  }
+}
+</script>
+</body>
+</html>

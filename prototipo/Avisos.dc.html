@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>IFES+Alegre — Avisos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+a{color:#14703F}a:hover{color:#0D4F2C}
+a:focus-visible,button:focus-visible{outline:3px solid #4A56A6;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height: 100%; background: #FAFFFF; color: #1F2A24; font-family: 'Poppins', system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+  <dc-import name="Cabecalho" active="avisos" hint-size="1280,80"></dc-import>
+
+  <section style="position: relative; overflow: hidden; background: #5F6DB5; color: #FFFFFF">
+    <svg width="110" height="110" viewBox="0 0 100 100" aria-hidden="true" style="position: absolute; right: 4%; top: 14px"><polygon points="50,0 61,30 90,15 70,40 100,50 70,60 90,85 61,70 50,100 39,70 10,85 30,60 0,50 30,40 10,15 39,30" fill="#DDA3F0"></polygon></svg>
+    <svg width="130" height="90" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; right: 16%; bottom: 0"><polygon points="0,100 50,0 100,100" fill="#F59E0B"></polygon></svg>
+    <div style="position: relative; max-width: 1200px; margin: 0 auto; padding: 44px 24px 48px">
+      <h1 style="margin: 0 0 10px; font-size: 38px; line-height: 1.15; font-weight: 700">Avisos</h1>
+      <p style="margin: 0; max-width: 560px">Comunicados dos docentes para os estudantes do campus.</p>
+    </div>
+  </section>
+
+  <main style="max-width: 1000px; margin: 0 auto; padding: 36px 24px 56px">
+    <div role="group" aria-label="Filtrar avisos por tipo" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="5">
+        <button onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="{{f.style}}">{{f.label}}</button>
+      </sc-for>
+    </div>
+
+    <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px">
+      <sc-for list="{{shown}}" as="a" hint-placeholder-count="4">
+        <li style="background: #FFFFFF; border: 1px solid #E3ECE7; border-left: 6px solid #5F6DB5; border-radius: 14px; padding: 18px 22px">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px">
+            <span style="{{a.chip}}">{{a.type}}</span>
+            <span style="font-size: 13px; color: #5A6660">Publicado em {{a.date}}</span>
+            <span style="font-size: 13px; color: #5A6660">· Válido até {{a.until}}</span>
+          </div>
+          <h2 style="margin: 0 0 6px; font-size: 18px; font-weight: 600">{{a.title}}</h2>
+          <p style="margin: 0; color: #3C4741">{{a.text}}</p>
+        </li>
+      </sc-for>
+    </ul>
+    <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+      <p role="status" style="margin: 0; padding: 28px; text-align: center; color: #5A6660; background: #FFFFFF; border: 1px dashed #C9D6CF; border-radius: 14px">Nenhum aviso deste tipo no momento.</p>
+    </sc-if>
+  </main>
+
+  <dc-import name="Rodape" hint-size="1280,340"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1200}}'>
+class Component extends DCLogic {
+  state = { filter: 'Todos' };
+
+  renderVals() {
+    const s = this.state;
+    const chip = (bg, fg) => 'display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;background:' + bg + ';color:' + fg;
+    const tone = { Urgente: ['#FBDDD0', '#8A2E0B'], Evento: ['#FDE9C8', '#7A4300'], Atividade: ['#DDF1E5', '#0F5A33'], Geral: ['#E6E9F8', '#343E85'] };
+    const all = [
+      { type: 'Urgente', date: '10/11/2026', until: '20/11/2026', title: 'Treino de vôlei remarcado', text: 'O treino desta semana será na quinta-feira, no mesmo horário.' },
+      { type: 'Atividade', date: '12/11/2026', until: '30/11/2026', title: 'Inscrições abertas para o Clube de teatro', text: 'Os interessados devem se inscrever pelo site até o fim do mês.' },
+      { type: 'Geral', date: '05/11/2026', until: '30/11/2026', title: 'Envie suas fotos para a galeria', text: 'Fotos enviadas passam por avaliação dos docentes antes de serem publicadas.' },
+      { type: 'Evento', date: '02/11/2026', until: '15/12/2026', title: 'Clube do livro: novo encontro', text: 'Os encontros acontecem às terças, às 16h, ao lado do ginásio.' }
+    ];
+    const list = s.filter === 'Todos' ? all : all.filter((a) => a.type === s.filter);
+    const names = ['Todos', 'Urgente', 'Evento', 'Atividade', 'Geral'];
+    return {
+      filters: names.map((n) => {
+        const on = s.filter === n;
+        return {
+          label: n,
+          pressed: on ? 'true' : 'false',
+          pick: () => this.setState({ filter: n }),
+          style: 'min-height:44px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:600;border:2px solid #14703F;background:' + (on ? '#14703F' : '#FFFFFF') + ';color:' + (on ? '#FFFFFF' : '#14703F')
+        };
+      }),
+      shown: list.map((a) => Object.assign({}, a, { chip: chip(tone[a.type][0], tone[a.type][1]) })),
+      empty: list.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>
