@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { Hero } from '@/components/Hero';
 import { authClient } from '@/lib/auth-client';
 
 export default function DocenteLoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -47,12 +49,10 @@ export default function DocenteLoginPage() {
         }
       }
 
-      window.location.href = '/docente';
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/docente/login')) {
-          window.location.href = '/docente';
-        }
-      }, 600);
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      router.push('/docente');
+      router.refresh();
+      window.location.assign('/docente');
     } catch {
       setError('Erro de comunicação ao autenticar.');
       setLoading(false);
