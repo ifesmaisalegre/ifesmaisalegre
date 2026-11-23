@@ -18,7 +18,16 @@ export function middleware(request: NextRequest) {
   requestHeaders.set('x-pathname', pathname);
 
   const isLoginRoute = pathname === '/docente/login' || pathname.startsWith('/docente/login/');
-  if (!isLoginRoute && !hasSessionCookie(request)) {
+
+  if (isLoginRoute) {
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
+  if (!hasSessionCookie(request)) {
     const loginUrl = new URL('/docente/login', request.url);
     return NextResponse.redirect(loginUrl);
   }

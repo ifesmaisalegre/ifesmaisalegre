@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { db } from '@/prisma/db';
 import { getServerSession } from '@/lib/session';
 import { DocenteLogoutButton } from '@/components/DocenteLogoutButton';
@@ -27,6 +28,14 @@ export default async function DocenteLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const hdrs = await headers();
+  const pathname = hdrs.get('x-pathname') ?? '';
+  const isLoginRoute = pathname === '/docente/login' || pathname.startsWith('/docente/login/');
+
+  if (isLoginRoute) {
+    return <>{children}</>;
+  }
+
   const session = await getServerSession();
   const email = session?.user?.email?.trim().toLowerCase() ?? '';
 
