@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Hero } from '@/components/Hero';
 import { DocentePanel } from '@/components/DocentePanel';
+import { DocenteLogoutButton } from '@/components/DocenteLogoutButton';
 import {
   getActivitiesFromDb,
   getAllAvisosForDocenteFromDb,
@@ -27,6 +28,17 @@ export default async function DocentePage() {
         title="Painel de controle"
         subtitle="Publique avisos, avalie as fotos enviadas para a galeria e acompanhe as inscrições nas atividades do campus."
       />
+      <div
+        className="container"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          paddingTop: 20,
+        }}
+      >
+        <DocenteLogoutButton />
+      </div>
       <DocentePanel
         initialAvisos={avisos}
         initialActivities={activities}

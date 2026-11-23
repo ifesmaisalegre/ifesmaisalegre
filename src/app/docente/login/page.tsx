@@ -47,7 +47,12 @@ export default function DocenteLoginPage() {
         }
       }
 
-      window.location.assign('/docente');
+      window.location.href = '/docente';
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/docente/login')) {
+          window.location.href = '/docente';
+        }
+      }, 600);
     } catch {
       setError('Erro de comunicação ao autenticar.');
       setLoading(false);
