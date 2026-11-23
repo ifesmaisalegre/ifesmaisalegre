@@ -1,30 +1,49 @@
-import type { ReactNode } from 'react';
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { headers } from 'next/headers';
+import { db } from '@/prisma/db';
+import { getServerSession } from '@/lib/session';
 import { DocenteLogoutButton } from '@/components/DocenteLogoutButton';
 
-export default async function DocenteLayout({ children }: { children: ReactNode }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+export const dynamic = 'force-dynamic';
 
-  const email = session?.user?.email?.trim().toLowerCase();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ormPublic = (db as unknown as { orm: { public: Record<string, any> } }).orm.public;
+
+async function isAuthorizedDocente(email: string): Promise<boolean> {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return false;
+
+  const docentes = await ormPublic.Docente.all();
+  const list = Array.isArray(docentes) ? docentes : [];
+  if (list.length === 0) return true;
+
+  return list.some(
+    (d: Record<string, unknown>) =>
+      String(d.email ?? '').trim().toLowerCase() === normalized && Boolean(d.active ?? true)
+  );
+}
+
+export default async function DocenteLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await getServerSession({ headers: await headers() });
+  const email = session?.user?.email?.trim().toLowerCase() ?? '';
+
   if (!session || !email) {
     redirect('/docente/login');
   }
 
-  const docente = await prisma.docente.findFirst({
-    where: {
-      email: { equals: email, mode: 'insensitive' },
-      active: true,
-    },
-  });
-
-  if (!docente) {
+  const authorized = await isAuthorizedDocente(email);
+  if (!authorized) {
     redirect('/docente/login');
   }
+
+  const displayName =
+    typeof session.user?.name === 'string' && session.user.name.trim().length > 0
+      ? session.user.name.trim()
+      : email;
 
   return (
     <div>
@@ -40,7 +59,7 @@ export default async function DocenteLayout({ children }: { children: ReactNode 
         }}
       >
         <span className="hint" style={{ fontSize: 13 }}>
-          Logado como <strong>{docente.name ?? session.user.name ?? email}</strong>
+          Logado como <strong>{displayName}</strong>
         </span>
         <DocenteLogoutButton />
       </div>
