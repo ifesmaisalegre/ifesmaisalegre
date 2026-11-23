@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Hero } from '@/components/Hero';
-import { ACTIVITIES } from '@/data/activities';
-import { MONITORIAS } from '@/data/monitorias';
+import { getActivityBySlugFromDb, getMonitoriasFromDb } from '@/lib/queries';
 import { fmtDaysShort, fmtRange } from '@/lib/format';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: 'Monitorias' };
 
@@ -13,8 +14,11 @@ const YEARS = [
   { year: '3' as const, label: 'Horários 3º ano', bg: 'var(--blue-soft)', chip: 'chip-brown' },
 ];
 
-export default function MonitoriasPage() {
-  const activity = ACTIVITIES.find((a) => a.slug === 'monitorias');
+export default async function MonitoriasPage() {
+  const [activity, monitorias] = await Promise.all([
+    getActivityBySlugFromDb('monitorias'),
+    getMonitoriasFromDb(),
+  ]);
 
   return (
     <main>
@@ -25,7 +29,7 @@ export default function MonitoriasPage() {
 
       <section className="container" style={{ padding: '36px 24px 28px' }}>
         <p style={{ maxWidth: 780, fontSize: 18, lineHeight: 1.6, color: '#2b3630', marginBottom: 14 }}>
-          {activity?.description}
+          {activity?.description ?? 'Acompanhe os horários de monitoria ofertados no campus.'}
         </p>
         <span className="chip chip-green" style={{ fontSize: 14, padding: '6px 14px' }}>Participação livre: não precisa de inscrição prévia</span>
       </section>
@@ -37,7 +41,7 @@ export default function MonitoriasPage() {
               {y.label}
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-              {MONITORIAS.filter((m) => m.year === y.year).map((m) => (
+              {monitorias.filter((m) => m.year === y.year).map((m) => (
                 <article key={m.id} style={{ background: '#fff', borderRadius: 16, padding: 22 }}>
                   <span className={`chip ${y.chip}`} style={{ marginBottom: 10 }}>{fmtDaysShort(m.days)}</span>
                   <h3 style={{ fontSize: 19, lineHeight: 1.3, fontWeight: 600, margin: '10px 0 8px' }}>{m.title}</h3>

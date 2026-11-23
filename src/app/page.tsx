@@ -1,12 +1,10 @@
 import Link from 'next/link';
 import { Star, Triangle, Logo } from '@/components/Logo';
 import { AvisoCard } from '@/components/AvisoCard';
-import { ACTIVITIES } from '@/data/activities';
-import { AVISOS, visibleAvisos } from '@/data/avisos';
+import { getActivitiesFromDb, getActiveAvisosFromDb } from '@/lib/queries';
 import { SITE } from '@/lib/site';
 import { todayISO } from '@/lib/format';
 
-// A data de hoje é lida a cada requisição para esconder avisos vencidos.
 export const dynamic = 'force-dynamic';
 
 const BENEFITS = [
@@ -22,9 +20,13 @@ const QUOTES = [
   { text: 'Ah! É um trabalho muito interessante. É muito importante pois visa melhorar a interação entre os alunos e os professores e entre os próprio alunos mesmo. Além de divulgar eventos que comumente não são divulgados na escola.', author: 'Purple tato' },
 ];
 
-export default function HomePage() {
-  const avisos = visibleAvisos(AVISOS, todayISO()).slice(0, 2);
-  const featured = ACTIVITIES.filter((a) => ['livro', 'volei', 'monitorias'].includes(a.slug));
+export default async function HomePage() {
+  const [activeAvisos, allActivities] = await Promise.all([
+    getActiveAvisosFromDb(todayISO()),
+    getActivitiesFromDb(),
+  ]);
+  const avisos = activeAvisos.slice(0, 2);
+  const featured = allActivities.filter((a) => ['livro', 'volei', 'monitorias'].includes(a.slug));
 
   return (
     <main>
@@ -146,7 +148,6 @@ export default function HomePage() {
               </div>
             </div>
             <div style={{ flex: '1.6 1 420px', minHeight: 340, borderRadius: 16, overflow: 'hidden', background: '#E9F1EC' }}>
-              {/* TODO(front): trocar este mapa ilustrativo pelo Google Maps incorporado (iframe do Google Maps). */}
               <svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Mapa ilustrativo da localização do Ifes Campus de Alegre, na Rodovia BR-482, Km 72" style={{ display: 'block', width: '100%', height: '100%', minHeight: 340 }}>
                 <rect width="640" height="400" fill="#E9F1EC" />
                 <path d="M-20 300 C120 260 200 340 320 300 S520 250 680 290 L680 340 C520 300 440 360 320 350 S120 310 -20 345z" fill="#BFDDF2" />

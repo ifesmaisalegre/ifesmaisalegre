@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import { Hero } from '@/components/Hero';
 import { AvisosList } from '@/components/AvisosList';
-import { AVISOS, visibleAvisos } from '@/data/avisos';
+import { getActiveAvisosFromDb } from '@/lib/queries';
 import { todayISO } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Avisos' };
-export const dynamic = 'force-dynamic'; // esconde avisos vencidos a cada acesso
+export const dynamic = 'force-dynamic';
 
-export default function AvisosPage() {
-  const avisos = visibleAvisos(AVISOS, todayISO());
+export default async function AvisosPage() {
+  const avisos = await getActiveAvisosFromDb(todayISO());
   return (
     <main>
       <Hero title="Avisos" subtitle="Comunicados dos docentes para os estudantes do campus." />
