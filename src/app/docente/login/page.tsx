@@ -12,6 +12,12 @@ export default function DocenteLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  async function redirectToPanel() {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    await authClient.getSession();
+    window.location.replace('/docente');
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
@@ -47,7 +53,7 @@ export default function DocenteLoginPage() {
         }
       }
 
-      window.location.assign('/docente');
+      await redirectToPanel();
     } catch {
       setError('Erro de comunicação ao autenticar.');
       setLoading(false);
