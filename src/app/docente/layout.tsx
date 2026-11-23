@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { db } from '@/prisma/db';
 import { getServerSession } from '@/lib/session';
-import { DocenteLogoutButton } from '@/components/DocenteLogoutButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,30 +47,5 @@ export default async function DocenteLayout({
     redirect('/docente/login');
   }
 
-  const displayName =
-    typeof session.user?.name === 'string' && session.user.name.trim().length > 0
-      ? session.user.name.trim()
-      : email;
-
-  return (
-    <div>
-      <div
-        className="container"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 16,
-          paddingBottom: 8,
-          gap: 12,
-        }}
-      >
-        <span className="hint" style={{ fontSize: 13 }}>
-          Logado como <strong>{displayName}</strong>
-        </span>
-        <DocenteLogoutButton />
-      </div>
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }

@@ -3,7 +3,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Hero } from '@/components/Hero';
 import { authClient } from '@/lib/auth-client';
-import { DocenteLogoutButton } from '@/components/DocenteLogoutButton';
 
 export default function DocenteLoginPage() {
   const [email, setEmail] = useState('');
@@ -12,34 +11,43 @@ export default function DocenteLoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [hasActiveSession, setHasActiveSession] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
     let active = true;
-    authClient
-      .getSession()
-      .then((res) => {
+
+    async function checkExistingSession() {
+      try {
+        const res = await authClient.getSession();
         if (active && res?.data?.session) {
-          setHasActiveSession(true);
+          window.location.replace('/docente');
+          return;
         }
-      })
-      .catch(() => {
-        // ignora erro de leitura inicial de sessão
-      });
+      } catch {
+        // segue para exibir o formulário de login
+      } finally {
+        if (active) {
+          setCheckingSession(false);
+        }
+      }
+    }
+
+    void checkExistingSession();
+
     return () => {
       active = false;
     };
   }, []);
 
-  async function finalizeAuthNavigation() {
-    for (let i = 0; i < 6; i += 1) {
+  async function enterPanel() {
+    for (let attempt = 0; attempt < 6; attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      const check = await authClient.getSession();
-      if (check?.data?.session) {
+      const sessionRes = await authClient.getSession();
+      if (sessionRes?.data?.session) {
         break;
       }
     }
-    window.location.assign('/docente');
+    window.location.replace('/docente');
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -77,7 +85,7 @@ export default function DocenteLoginPage() {
         }
       }
 
-      await finalizeAuthNavigation();
+      await enterPanel();
     } catch {
       setError('Erro de comunicação ao autenticar.');
       setLoading(false);
@@ -92,97 +100,91 @@ export default function DocenteLoginPage() {
       />
       <div className="container" style={{ maxWidth: 480, padding: '40px 24px 64px' }}>
         <div className="card" style={{ padding: 28 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 8,
-              marginBottom: 4,
-            }}
-          >
-            <p className="hint" style={{ fontWeight: 600, margin: 0 }}>
-              IFES+Alegre · Acesso Restrito
-            </p>
-            {hasActiveSession && <DocenteLogoutButton />}
-          </div>
-
+          <p className="hint" style={{ fontWeight: 600, marginBottom: 4 }}>
+            IFES+Alegre · Acesso Restrito
+          </p>
           <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 18 }}>
             {isSignUp ? 'Cadastrar credencial docente' : 'Entrar no painel'}
           </h2>
 
-          <form onSubmit={(e) => void handleSubmit(e)} className="form" style={{ gap: 16 }}>
-            {isSignUp && (
-              <div className="field">
-                <label htmlFor="d-name">Nome completo</label>
-                <input
-                  id="d-name"
-                  type="text"
-                  required
-                  className="input"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Ex.: Prof. Maria Silva"
-                />
-              </div>
-            )}
+          {checkingSession ? (
+            <p className="hint">Verificando sessão...</p>
+          ) : (
+            <>
+              <form onSubmit={(e) => void handleSubmit(e)} className="form" style={{ gap: 16 }}>
+                {isSignUp && (
+                  <div className="field">
+                    <label htmlFor="d-name">Nome completo</label>
+                    <input
+                      id="d-name"
+                      type="text"
+                      required
+                      className="input"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Ex.: Prof. Maria Silva"
+                    />
+                  </div>
+                )}
 
-            <div className="field">
-              <label htmlFor="d-email">E-mail institucional</label>
-              <input
-                id="d-email"
-                type="email"
-                required
-                className="input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="docente@ifes.edu.br"
-              />
-            </div>
+                <div className="field">
+                  <label htmlFor="d-email">E-mail institucional</label>
+                  <input
+                    id="d-email"
+                    type="email"
+                    required
+                    className="input"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="docente@ifes.edu.br"
+                  />
+                </div>
 
-            <div className="field">
-              <label htmlFor="d-password">Senha</label>
-              <input
-                id="d-password"
-                type="password"
-                required
-                className="input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-              />
-            </div>
+                <div className="field">
+                  <label htmlFor="d-password">Senha</label>
+                  <input
+                    id="d-password"
+                    type="password"
+                    required
+                    className="input"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </div>
 
-            {error && (
-              <p role="alert" className="status status-err">
-                {error}
-              </p>
-            )}
+                {error && (
+                  <p role="alert" className="status status-err">
+                    {error}
+                  </p>
+                )}
 
-            <button type="submit" className="btn btn-lg" disabled={loading} style={{ width: '100%' }}>
-              {loading ? 'Aguarde...' : isSignUp ? 'Criar conta e entrar' : 'Entrar'}
-            </button>
-          </form>
+                <button type="submit" className="btn btn-lg" disabled={loading} style={{ width: '100%' }}>
+                  {loading ? 'Aguarde...' : isSignUp ? 'Criar conta e entrar' : 'Entrar'}
+                </button>
+              </form>
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsSignUp((prev) => !prev);
-              setError('');
-            }}
-            style={{
-              marginTop: 16,
-              width: '100%',
-              background: 'none',
-              border: 0,
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500,
-              color: 'var(--ink-2)',
-            }}
-          >
-            {isSignUp ? 'Já possui conta? Fazer login' : 'Primeiro acesso? Cadastrar credencial'}
-          </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp((prev) => !prev);
+                  setError('');
+                }}
+                style={{
+                  marginTop: 16,
+                  width: '100%',
+                  background: 'none',
+                  border: 0,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'var(--ink-2)',
+                }}
+              >
+                {isSignUp ? 'Já possui conta? Fazer login' : 'Primeiro acesso? Cadastrar credencial'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </main>
