@@ -6,17 +6,29 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma skills sync || exit 0",
+    "contract:emit": "prisma contract emit"
   },
   "dependencies": {
+    "@prisma/client": "^7.10.1",
+    "@prisma/orm-postgres": "^8.0.0-rc.25",
+    "@vercel/blob": "^2.9.0",
+    "better-auth": "^1.7.27",
+    "dotenv": "^18.0.10",
     "next": "15.1.6",
+    "pg": "^8.23.1",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "temporal-polyfill": "^1.0.8",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "22.10.7",
+    "@types/pg": "^8.23.1",
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",
+    "prisma": "^8.0.0-rc.35",
     "typescript": "5.7.3"
   }
 }

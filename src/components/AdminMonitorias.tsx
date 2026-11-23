@@ -2,23 +2,39 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { MONITORIAS } from '@/data/monitorias';
+import { createMonitoriaAction } from '@/app/actions';
 import { DAY_FULL, fmtDaysShort, fmtRange } from '@/lib/format';
 import type { Day, Monitoria } from '@/lib/types';
 
 const DAYS: Day[] = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
 const COLS = '1.6fr 0.6fr 1.6fr 1.1fr 1.2fr 1.5fr 1.6fr';
 
-type Form = { title: string; year: '1' | '2' | '3'; exclusive: string; start: string; end: string; place: string; monitor: string };
+type Form = {
+  title: string;
+  year: '1' | '2' | '3';
+  exclusive: string;
+  start: string;
+  end: string;
+  place: string;
+  monitor: string;
+};
 type Errors = Partial<Record<keyof Form | 'days', string>>;
-const emptyForm = (): Form => ({ title: '', year: '1', exclusive: '', start: '15:40', end: '16:30', place: '', monitor: '' });
+const emptyForm = (): Form => ({
+  title: '',
+  year: '1',
+  exclusive: '',
+  start: '15:40',
+  end: '16:30',
+  place: '',
+  monitor: '',
+});
 
-/**
- * Administração de monitorias (criar, editar, excluir). Hoje na memória do navegador.
- * TODO(back): gravar no banco e proteger com login.
- */
-export function AdminMonitorias() {
-  const [items, setItems] = useState<Monitoria[]>(MONITORIAS);
+export function AdminMonitorias({
+  initialMonitorias = [],
+}: {
+  initialMonitorias?: Monitoria[];
+}) {
+  const [items, setItems] = useState<Monitoria[]>(initialMonitorias);
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -29,10 +45,32 @@ export function AdminMonitorias() {
   const [q, setQ] = useState('');
   const [fYear, setFYear] = useState('all');
 
-  function openNew() { setView('form'); setEditingId(null); setForm(emptyForm()); setDays([]); setErrors({}); setNotice(''); setDeletingId(null); }
+  function openNew() {
+    setView('form');
+    setEditingId(null);
+    setForm(emptyForm());
+    setDays([]);
+    setErrors({});
+    setNotice('');
+    setDeletingId(null);
+  }
+
   function openEdit(m: Monitoria) {
-    setView('form'); setEditingId(m.id); setDays(m.days.slice()); setErrors({}); setNotice(''); setDeletingId(null);
-    setForm({ title: m.title, year: m.year, exclusive: m.exclusive, start: m.start, end: m.end, place: m.place, monitor: m.monitor });
+    setView('form');
+    setEditingId(m.id);
+    setDays(m.days.slice());
+    setErrors({});
+    setNotice('');
+    setDeletingId(null);
+    setForm({
+      title: m.title,
+      year: m.year,
+      exclusive: m.exclusive,
+      start: m.start,
+      end: m.end,
+      place: m.place,
+      monitor: m.monitor,
+    });
   }
 
   const upd = <K extends keyof Form>(key: K, value: Form[K]) => {
@@ -40,42 +78,90 @@ export function AdminMonitorias() {
     setErrors((e) => ({ ...e, [key]: '' }));
   };
 
-  function save() {
+  async function save() {
     const er: Errors = {};
-    const need = (k: keyof Form, msg: string) => { if (!String(form[k] || '').trim()) er[k] = msg; };
+    const need = (k: keyof Form, msg: string) => {
+      if (!String(form[k] || '').trim()) er[k] = msg;
+    };
     need('title', 'Informe a disciplina.');
     need('start', 'Informe o horário de início.');
     need('end', 'Informe o horário de término.');
     need('place', 'Informe o local.');
     need('monitor', 'Informe o(a) monitor(a).');
-    if (!er.start && !er.end && form.end <= form.start) er.end = 'O término deve ser depois do início.';
+    if (!er.start && !er.end && form.end <= form.start) {
+      er.end = 'O término deve ser depois do início.';
+    }
     if (days.length === 0) er.days = 'Escolha pelo menos um dia.';
     setErrors(er);
     if (Object.keys(er).some((k) => er[k as keyof Errors])) return;
 
+    const sortedDays = DAYS.filter((d) => days.includes(d));
     const rec = {
-      title: form.title.trim(), year: form.year, exclusive: form.exclusive.trim(), days: DAYS.filter((d) => days.includes(d)),
-      start: form.start, end: form.end, place: form.place.trim(), monitor: form.monitor.trim(),
+      title: form.title.trim(),
+      year: form.year,
+      exclusive: form.exclusive.trim(),
+      days: sortedDays,
+      start: form.start,
+      end: form.end,
+      place: form.place.trim(),
+      monitor: form.monitor.trim(),
     };
+
     if (editingId !== null) {
       setItems((l) => l.map((x) => (x.id === editingId ? { ...rec, id: x.id } : x)));
       setNotice(`Monitoria de "${rec.title}" atualizada.`);
-    } else {
-      setItems((l) => [...l, { ...rec, id: Math.max(0, ...l.map((x) => x.id)) + 1 }]);
-      setNotice(`Monitoria de "${rec.title}" criada.`);
+      setView('list');
+      setEditingId(null);
+      return;
     }
-    setView('list'); setEditingId(null);
+
+    const res = await createMonitoriaAction({
+      title: rec.title,
+      year: rec.year,
+      exclusive: rec.exclusive,
+      daysJson: JSON.stringify(rec.days),
+      start: rec.start,
+      end: rec.end,
+      place: rec.place,
+      monitor: rec.monitor,
+    });
+
+    if (!res.ok) {
+      setNotice(res.message);
+      return;
+    }
+
+    setItems((l) => [...l, { ...rec, id: Math.max(0, ...l.map((x) => x.id)) + 1 }]);
+    setNotice(res.message);
+    setView('list');
+    setEditingId(null);
   }
 
   const qn = q.trim().toLowerCase();
-  const visible = items.filter((m) => (!qn || `${m.title} ${m.monitor}`.toLowerCase().includes(qn)) && (fYear === 'all' || m.year === fYear));
+  const visible = items.filter(
+    (m) =>
+      (!qn || `${m.title} ${m.monitor}`.toLowerCase().includes(qn)) &&
+      (fYear === 'all' || m.year === fYear)
+  );
   const errCount = Object.values(errors).filter(Boolean).length;
 
-  const text = (key: keyof Form, id: string, label: string, opts: { type?: string; placeholder?: string; flex?: string } = {}) => (
+  const text = (
+    key: keyof Form,
+    id: string,
+    label: string,
+    opts: { type?: string; placeholder?: string; flex?: string } = {}
+  ) => (
     <div className="field" style={{ flex: opts.flex ?? '1 1 100%' }}>
       <label htmlFor={id}>{label}</label>
-      <input id={id} type={opts.type ?? 'text'} className="input" value={form[key]} placeholder={opts.placeholder}
-        aria-invalid={errors[key] ? true : undefined} onChange={(e) => upd(key, e.target.value as never)} />
+      <input
+        id={id}
+        type={opts.type ?? 'text'}
+        className="input"
+        value={form[key]}
+        placeholder={opts.placeholder}
+        aria-invalid={errors[key] ? true : undefined}
+        onChange={(e) => upd(key, e.target.value as never)}
+      />
       {errors[key] && <p className="err">{errors[key]}</p>}
     </div>
   );
@@ -103,7 +189,10 @@ export function AdminMonitorias() {
               <div className="field" style={{ flex: '1 1 140px' }}>
                 <label htmlFor="m-y">Ano</label>
                 <select id="m-y" className="input" value={fYear} onChange={(e) => setFYear(e.target.value)}>
-                  <option value="all">Todos</option><option value="1">1º ano</option><option value="2">2º ano</option><option value="3">3º ano</option>
+                  <option value="all">Todos</option>
+                  <option value="1">1º ano</option>
+                  <option value="2">2º ano</option>
+                  <option value="3">3º ano</option>
                 </select>
               </div>
             </div>
@@ -142,7 +231,11 @@ export function AdminMonitorias() {
                   </span>
                 </div>
               ))}
-              {visible.length === 0 && <p style={{ padding: '24px 20px', color: 'var(--ink-3)' }}>{items.length === 0 ? 'Nenhuma monitoria cadastrada.' : 'Nenhuma monitoria encontrada com esses filtros.'}</p>}
+              {visible.length === 0 && (
+                <p style={{ padding: '24px 20px', color: 'var(--ink-3)' }}>
+                  {items.length === 0 ? 'Nenhuma monitoria cadastrada.' : 'Nenhuma monitoria encontrada com esses filtros.'}
+                </p>
+              )}
             </div>
           </div>
           <p className="hint" style={{ marginTop: 12 }}>As monitorias aparecem na página Monitorias, separadas por ano.</p>
@@ -159,7 +252,9 @@ export function AdminMonitorias() {
             <div className="field" style={{ flex: '1 1 140px' }}>
               <label htmlFor="mm-year">Ano *</label>
               <select id="mm-year" className="input" value={form.year} onChange={(e) => upd('year', e.target.value as Form['year'])}>
-                <option value="1">1º ano</option><option value="2">2º ano</option><option value="3">3º ano</option>
+                <option value="1">1º ano</option>
+                <option value="2">2º ano</option>
+                <option value="3">3º ano</option>
               </select>
             </div>
             {text('exclusive', 'mm-excl', 'Turma exclusiva (opcional)', { placeholder: 'Ex.: Exclusiva para 3ºTII' })}
@@ -168,8 +263,15 @@ export function AdminMonitorias() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {DAYS.map((d) => (
                   <label key={d} className={days.includes(d) ? 'pill on' : 'pill'}>
-                    <input type="checkbox" checked={days.includes(d)} aria-label={DAY_FULL[d]}
-                      onChange={() => { setDays((l) => (l.includes(d) ? l.filter((x) => x !== d) : [...l, d])); setErrors((e) => ({ ...e, days: '' })); }} />
+                    <input
+                      type="checkbox"
+                      checked={days.includes(d)}
+                      aria-label={DAY_FULL[d]}
+                      onChange={() => {
+                        setDays((l) => (l.includes(d) ? l.filter((x) => x !== d) : [...l, d]));
+                        setErrors((e) => ({ ...e, days: '' }));
+                      }}
+                    />
                     <span>{d}</span>
                   </label>
                 ))}
@@ -182,7 +284,7 @@ export function AdminMonitorias() {
             {text('monitor', 'mm-mon', 'Monitor(a) *')}
           </div>
           <div className="actions" style={{ marginTop: 24, gap: 10 }}>
-            <button type="button" className="btn btn-lg" onClick={save}>{editingId !== null ? 'Salvar alterações' : 'Criar monitoria'}</button>
+            <button type="button" className="btn btn-lg" onClick={() => void save()}>{editingId !== null ? 'Salvar alterações' : 'Criar monitoria'}</button>
             <button type="button" className="btn btn-lg btn-gray" onClick={() => { setView('list'); setEditingId(null); setErrors({}); }}>Cancelar</button>
           </div>
         </div>

@@ -1,0 +1,135 @@
+// use prisma-8
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          String    @default("USER")
+  createdAt     DateTime  @default(now()) @onCreate(now())
+  updatedAt     temporal.UpdatedAt
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now()) @onCreate(now())
+  updatedAt temporal.UpdatedAt
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @onCreate(now())
+  updatedAt             temporal.UpdatedAt
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now()) @onCreate(now())
+  updatedAt  temporal.UpdatedAt
+}
+
+model Docente {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  emailUser String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @onCreate(now())
+  updatedAt temporal.UpdatedAt
+}
+
+model Activity {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  name        String
+  category    String
+  description String
+  days        String
+  start       String
+  end         String   @default("")
+  place       String
+  responsible String   @default("A definir")
+  email       String   @default("")
+  spots       Int?
+  audience    String   @default("Todos os alunos")
+  status      String   @default("Inscrições abertas")
+  signup      String   @default("sim")
+  tone        String   @default("#E6E9F8")
+  createdAt   DateTime @default(now()) @onCreate(now())
+  updatedAt   temporal.UpdatedAt
+}
+
+model Monitoria {
+  id        Int      @id @default(autoincrement())
+  title     String
+  year      String
+  exclusive String   @default("")
+  days      String
+  start     String
+  end       String
+  place     String
+  monitor   String
+  createdAt DateTime @default(now()) @onCreate(now())
+  updatedAt temporal.UpdatedAt
+}
+
+model Aviso {
+  id        Int       @id @default(autoincrement())
+  title     String
+  body      String
+  category  String    @default("Geral")
+  target    String    @default("Todas as atividades")
+  date      String
+  until     String    @default("")
+  published Boolean   @default(false)
+  createdAt DateTime  @default(now()) @onCreate(now())
+  updatedAt temporal.UpdatedAt
+}
+
+model GalleryPhoto {
+  id           Int      @id @default(autoincrement())
+  code         String   @unique
+  imageUrl     String?
+  caption      String?
+  date         String
+  status       String   @default("pending")
+  tone         String   @default("#E6E9F8")
+  lgpdConsent  Boolean  @default(false)
+  guardianAuth Boolean  @default(false)
+  activitySlug String?
+  approvedBy   String?
+  createdAt    DateTime @default(now()) @onCreate(now())
+  updatedAt    temporal.UpdatedAt
+}
+
+model Inscricao {
+  id           Int      @id @default(autoincrement())
+  name         String
+  matricula    String
+  email        String
+  phone        String
+  activitySlug String
+  activityName String
+  privacyOk    Boolean  @default(false)
+  date         String
+  createdAt    DateTime @default(now()) @onCreate(now())
+}

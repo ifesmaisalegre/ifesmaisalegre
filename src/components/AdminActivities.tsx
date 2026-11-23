@@ -2,39 +2,72 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ACTIVITIES } from '@/data/activities';
+import { updateActivityStatusAction } from '@/app/actions';
 import { DAY_FULL, DAY_ORDER, fmtRange } from '@/lib/format';
 import type { Activity, ActivityStatus, Category, Day } from '@/lib/types';
 
 const CATEGORIES: Category[] = ['Esporte', 'Cultura e arte', 'Estudos', 'Jogos', 'Bem-estar', 'Outra'];
 const CAT_CHIP: Record<Category, string> = {
-  Esporte: 'chip-amber', 'Cultura e arte': 'chip-lilac', Estudos: 'chip-blue', Jogos: 'chip-green', 'Bem-estar': 'chip-brown', Outra: 'chip-gray',
+  Esporte: 'chip-amber',
+  'Cultura e arte': 'chip-lilac',
+  Estudos: 'chip-blue',
+  Jogos: 'chip-green',
+  'Bem-estar': 'chip-brown',
+  Outra: 'chip-gray',
 };
 const STATUS_CHIP: Record<ActivityStatus, string> = {
-  Ativa: 'chip-solid', 'Inscrições abertas': 'chip-solid', 'Inscrições encerradas': 'chip-amber', Inativa: 'chip-gray',
+  Ativa: 'chip-solid',
+  'Inscrições abertas': 'chip-solid',
+  'Inscrições encerradas': 'chip-amber',
+  Inativa: 'chip-gray',
 };
 const COLS = '1.6fr 1.5fr 1.1fr 1fr 0.9fr 1.2fr 1.6fr';
 
 type Form = {
-  name: string; category: Category; description: string; start: string; end: string; place: string;
-  responsible: string; email: string; spots: string; audience: string; status: ActivityStatus; signup: 'sim' | 'nao';
+  name: string;
+  category: Category;
+  description: string;
+  start: string;
+  end: string;
+  place: string;
+  responsible: string;
+  email: string;
+  spots: string;
+  audience: string;
+  status: ActivityStatus;
+  signup: 'sim' | 'nao';
 };
 type Errors = Partial<Record<keyof Form | 'days', string>>;
 
 const emptyForm = (): Form => ({
-  name: '', category: 'Esporte', description: '', start: '', end: '', place: '', responsible: '', email: '',
-  spots: '', audience: 'Todos os alunos', status: 'Inscrições abertas', signup: 'sim',
+  name: '',
+  category: 'Esporte',
+  description: '',
+  start: '',
+  end: '',
+  place: '',
+  responsible: '',
+  email: '',
+  spots: '',
+  audience: 'Todos os alunos',
+  status: 'Inscrições abertas',
+  signup: 'sim',
 });
 
 const slugify = (s: string) =>
-  s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 
-/**
- * Administração de atividades (criar, editar, excluir). Hoje na memória do navegador.
- * TODO(back): gravar no banco, proteger com login e enviar as fotos para armazenamento real.
- */
-export function AdminActivities() {
-  const [items, setItems] = useState<Activity[]>(ACTIVITIES);
+export function AdminActivities({
+  initialActivities = [],
+}: {
+  initialActivities?: Activity[];
+}) {
+  const [items, setItems] = useState<Activity[]>(initialActivities);
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -48,14 +81,43 @@ export function AdminActivities() {
   const [fStatus, setFStatus] = useState('Todas');
 
   const needsSignup = form.signup !== 'nao';
-  const statuses: ActivityStatus[] = needsSignup ? ['Inscrições abertas', 'Inscrições encerradas', 'Inativa'] : ['Ativa', 'Inativa'];
+  const statuses: ActivityStatus[] = needsSignup
+    ? ['Inscrições abertas', 'Inscrições encerradas', 'Inativa']
+    : ['Ativa', 'Inativa'];
 
   function openNew() {
-    setView('form'); setEditingId(null); setForm(emptyForm()); setDays([]); setPhotos([]); setErrors({}); setNotice(''); setDeletingId(null);
+    setView('form');
+    setEditingId(null);
+    setForm(emptyForm());
+    setDays([]);
+    setPhotos([]);
+    setErrors({});
+    setNotice('');
+    setDeletingId(null);
   }
+
   function openEdit(a: Activity) {
-    setView('form'); setEditingId(a.id); setDays(a.days.slice()); setPhotos(a.photos.slice()); setErrors({}); setNotice(''); setDeletingId(null);
-    setForm({ name: a.name, category: a.category, description: a.description, start: a.start, end: a.end, place: a.place, responsible: a.responsible, email: a.email, spots: a.spots, audience: a.audience, status: a.status, signup: a.signup });
+    setView('form');
+    setEditingId(a.id);
+    setDays(a.days.slice());
+    setPhotos(a.photos.slice());
+    setErrors({});
+    setNotice('');
+    setDeletingId(null);
+    setForm({
+      name: a.name,
+      category: a.category,
+      description: a.description,
+      start: a.start,
+      end: a.end,
+      place: a.place,
+      responsible: a.responsible,
+      email: a.email,
+      spots: a.spots,
+      audience: a.audience,
+      status: a.status,
+      signup: a.signup,
+    });
   }
 
   const upd = <K extends keyof Form>(key: K, value: Form[K]) => {
@@ -73,9 +135,11 @@ export function AdminActivities() {
     setErrors((e) => ({ ...e, spots: '' }));
   }
 
-  function save() {
+  async function save() {
     const er: Errors = {};
-    const need = (k: keyof Form, msg: string) => { if (!String(form[k] || '').trim()) er[k] = msg; };
+    const need = (k: keyof Form, msg: string) => {
+      if (!String(form[k] || '').trim()) er[k] = msg;
+    };
     need('name', 'Informe o nome da atividade.');
     need('description', 'Escreva uma descrição para a atividade.');
     need('start', 'Informe o horário de início.');
@@ -84,30 +148,70 @@ export function AdminActivities() {
     need('audience', 'Informe quem pode participar.');
     need('email', 'Informe um e-mail de contato.');
     if (needsSignup) need('spots', 'Informe o número de vagas.');
-    if (!er.email && !/^\S+@\S+\.\S+$/.test(form.email.trim())) er.email = 'Informe um e-mail válido.';
+    if (!er.email && !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+      er.email = 'Informe um e-mail válido.';
+    }
     if (needsSignup && !er.spots) {
       const n = Number(form.spots);
       if (!Number.isInteger(n) || n < 1) er.spots = 'Use um número inteiro maior que zero.';
     }
-    if (!er.start && form.end && form.end <= form.start) er.end = 'O término deve ser depois do início.';
+    if (!er.start && form.end && form.end <= form.start) {
+      er.end = 'O término deve ser depois do início.';
+    }
     if (days.length === 0) er.days = 'Escolha pelo menos um dia da semana.';
     setErrors(er);
     if (Object.keys(er).some((k) => er[k as keyof Errors])) return;
 
     const sortedDays = DAY_ORDER.filter((d) => days.includes(d));
     const base = {
-      name: form.name.trim(), category: form.category, description: form.description.trim(), days: sortedDays,
-      start: form.start, end: form.end, place: form.place.trim(), responsible: form.responsible.trim(), email: form.email.trim(),
-      spots: needsSignup ? form.spots.trim() : '', audience: form.audience.trim(), status: form.status, signup: form.signup, photos: photos.slice(),
+      name: form.name.trim(),
+      category: form.category,
+      description: form.description.trim(),
+      days: sortedDays,
+      start: form.start,
+      end: form.end,
+      place: form.place.trim(),
+      responsible: form.responsible.trim(),
+      email: form.email.trim(),
+      spots: needsSignup ? form.spots.trim() : '',
+      audience: form.audience.trim(),
+      status: form.status,
+      signup: form.signup,
+      photos: photos.slice(),
     };
+
     if (editingId !== null) {
+      const mappedStatus =
+        base.status === 'Inscrições encerradas'
+          ? 'Encerrada'
+          : base.status === 'Ativa'
+            ? 'Inscrições abertas'
+            : base.status;
+      const res = await updateActivityStatusAction({
+        id: editingId,
+        status: mappedStatus,
+        signup: base.signup,
+      });
+      if (!res.ok) {
+        setNotice(res.message);
+        return;
+      }
       setItems((l) => l.map((x) => (x.id === editingId ? { ...x, ...base } : x)));
       setNotice(`Atividade "${base.name}" atualizada.`);
     } else {
-      setItems((l) => [...l, { ...base, id: Math.max(0, ...l.map((x) => x.id)) + 1, slug: slugify(base.name), tone: '#E6E9F8' }]);
+      setItems((l) => [
+        ...l,
+        {
+          ...base,
+          id: Math.max(0, ...l.map((x) => x.id)) + 1,
+          slug: slugify(base.name),
+          tone: '#E6E9F8',
+        },
+      ]);
       setNotice(`Atividade "${base.name}" criada.`);
     }
-    setView('list'); setEditingId(null);
+    setView('list');
+    setEditingId(null);
   }
 
   const qn = q.trim().toLowerCase();
@@ -115,15 +219,28 @@ export function AdminActivities() {
     (a) =>
       (!qn || `${a.name} ${a.responsible} ${a.place}`.toLowerCase().includes(qn)) &&
       (fCat === 'Todas' || a.category === fCat) &&
-      (fStatus === 'Todas' || a.status === fStatus),
+      (fStatus === 'Todas' || a.status === fStatus)
   );
   const errCount = Object.values(errors).filter(Boolean).length;
 
-  const text = (key: keyof Form, id: string, label: string, opts: { type?: string; placeholder?: string; flex?: string; disabled?: boolean } = {}) => (
+  const text = (
+    key: keyof Form,
+    id: string,
+    label: string,
+    opts: { type?: string; placeholder?: string; flex?: string; disabled?: boolean } = {}
+  ) => (
     <div className="field" style={{ flex: opts.flex ?? '1 1 260px' }}>
       <label htmlFor={id}>{label}</label>
-      <input id={id} type={opts.type ?? 'text'} className="input" value={form[key]} placeholder={opts.placeholder} disabled={opts.disabled}
-        aria-invalid={errors[key] ? true : undefined} onChange={(e) => upd(key, e.target.value as never)} />
+      <input
+        id={id}
+        type={opts.type ?? 'text'}
+        className="input"
+        value={form[key]}
+        placeholder={opts.placeholder}
+        disabled={opts.disabled}
+        aria-invalid={errors[key] ? true : undefined}
+        onChange={(e) => upd(key, e.target.value as never)}
+      />
       {errors[key] && <p className="err">{errors[key]}</p>}
     </div>
   );
@@ -205,12 +322,14 @@ export function AdminActivities() {
               ))}
               {visible.length === 0 && (
                 <p style={{ padding: '24px 20px', color: 'var(--ink-3)' }}>
-                  {items.length === 0 ? 'Nenhuma atividade cadastrada. Clique em "Nova atividade" para começar.' : 'Nenhuma atividade encontrada com esses filtros.'}
+                  {items.length === 0
+                    ? 'Nenhuma atividade cadastrada. Clique em "Nova atividade" para começar.'
+                    : 'Nenhuma atividade encontrada com esses filtros.'}
                 </p>
               )}
             </div>
           </div>
-          <p className="hint" style={{ marginTop: 12 }}>Dados de exemplo apenas para demonstração do layout.</p>
+          <p className="hint" style={{ marginTop: 12 }}>Atividades carregadas do banco de dados do projeto.</p>
         </>
       )}
 
@@ -230,8 +349,15 @@ export function AdminActivities() {
             </div>
             <div className="field" style={{ flex: '1 1 100%' }}>
               <label htmlFor="a-desc">Descrição *</label>
-              <textarea id="a-desc" rows={4} className="input" value={form.description} placeholder="Explique em poucas linhas o que acontece na atividade"
-                aria-invalid={errors.description ? true : undefined} onChange={(e) => upd('description', e.target.value)} />
+              <textarea
+                id="a-desc"
+                rows={4}
+                className="input"
+                value={form.description}
+                placeholder="Explique em poucas linhas o que acontece na atividade"
+                aria-invalid={errors.description ? true : undefined}
+                onChange={(e) => upd('description', e.target.value)}
+              />
               {errors.description && <p className="err">{errors.description}</p>}
             </div>
 
@@ -240,8 +366,15 @@ export function AdminActivities() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {DAY_ORDER.map((d) => (
                   <label key={d} className={days.includes(d) ? 'pill on' : 'pill'}>
-                    <input type="checkbox" checked={days.includes(d)} aria-label={DAY_FULL[d]}
-                      onChange={() => { setDays((l) => (l.includes(d) ? l.filter((x) => x !== d) : [...l, d])); setErrors((e) => ({ ...e, days: '' })); }} />
+                    <input
+                      type="checkbox"
+                      checked={days.includes(d)}
+                      aria-label={DAY_FULL[d]}
+                      onChange={() => {
+                        setDays((l) => (l.includes(d) ? l.filter((x) => x !== d) : [...l, d]));
+                        setErrors((e) => ({ ...e, days: '' }));
+                      }}
+                    />
                     <span>{d}</span>
                   </label>
                 ))}
@@ -253,10 +386,12 @@ export function AdminActivities() {
               <legend className="legend" style={{ marginBottom: 8 }}>A atividade precisa de inscrição prévia? *</legend>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 <label className={needsSignup ? 'pill on' : 'pill'}>
-                  <input type="radio" name="a-signup" checked={needsSignup} onChange={() => setSignup('sim')} /><span>Sim, exige inscrição</span>
+                  <input type="radio" name="a-signup" checked={needsSignup} onChange={() => setSignup('sim')} />
+                  <span>Sim, exige inscrição</span>
                 </label>
                 <label className={!needsSignup ? 'pill on' : 'pill'}>
-                  <input type="radio" name="a-signup" checked={!needsSignup} onChange={() => setSignup('nao')} /><span>Não, participação livre</span>
+                  <input type="radio" name="a-signup" checked={!needsSignup} onChange={() => setSignup('nao')} />
+                  <span>Não, participação livre</span>
                 </label>
               </div>
               <p className="hint" style={{ marginTop: 8 }}>Atividades sem inscrição prévia (como as monitorias) não mostram o formulário de inscrição nem o número de vagas no site.</p>
@@ -278,20 +413,33 @@ export function AdminActivities() {
 
             <div className="field" style={{ flex: '1 1 100%', padding: 16, background: '#f4f7f5', borderRadius: 12 }}>
               <label htmlFor="a-photo">Fotos da atividade (opcional)</label>
-              <input id="a-photo" type="file" accept="image/*" multiple style={{ fontSize: 14 }}
-                onChange={(e) => { const names = Array.from(e.target.files ?? []).map((f: File) => f.name); if (names.length) setPhotos((l) => [...l, ...names]); e.target.value = ''; }} />
+              <input
+                id="a-photo"
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ fontSize: 14 }}
+                onChange={(e) => {
+                  const names = Array.from(e.target.files ?? []).map((f: File) => f.name);
+                  if (names.length) setPhotos((l) => [...l, ...names]);
+                  e.target.value = '';
+                }}
+              />
               <p className="hint">Você pode escolher várias fotos de uma vez ou adicionar aos poucos. A primeira da lista é a capa. Sem fotos, o site mostra uma imagem padrão com o logo.</p>
-              {/* TODO(back): enviar os arquivos para armazenamento real; hoje só guardamos os nomes. */}
               {photos.length > 0 && (
                 <>
                   <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 4 }}>
-                    <span role="status" style={{ fontSize: 14, fontWeight: 600 }}>{photos.length === 1 ? '1 foto adicionada' : `${photos.length} fotos adicionadas`}</span>
+                    <span role="status" style={{ fontSize: 14, fontWeight: 600 }}>
+                      {photos.length === 1 ? '1 foto adicionada' : `${photos.length} fotos adicionadas`}
+                    </span>
                     <button type="button" className="btn btn-danger-outline btn-sm" onClick={() => setPhotos([])}>Remover todas</button>
                   </div>
                   <ul style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {photos.map((name, idx) => (
                       <li key={`${name}-${idx}`} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 6px 6px 12px', background: '#fff', border: '1px solid #d5e0da', borderRadius: 10 }}>
-                        <span style={{ fontSize: 14 }}><strong style={{ fontWeight: 600 }}>{idx === 0 ? 'Capa' : `Foto ${idx + 1}`}</strong> · {name}</span>
+                        <span style={{ fontSize: 14 }}>
+                          <strong style={{ fontWeight: 600 }}>{idx === 0 ? 'Capa' : `Foto ${idx + 1}`}</strong> · {name}
+                        </span>
                         <button type="button" className="btn btn-danger-outline btn-sm" aria-label={`Remover ${name}`} onClick={() => setPhotos((l) => l.filter((_, k) => k !== idx))}>Remover</button>
                       </li>
                     ))}
@@ -302,7 +450,7 @@ export function AdminActivities() {
           </div>
 
           <div className="actions" style={{ marginTop: 24, gap: 10 }}>
-            <button type="button" className="btn btn-lg" onClick={save}>{editingId !== null ? 'Salvar alterações' : 'Criar atividade'}</button>
+            <button type="button" className="btn btn-lg" onClick={() => void save()}>{editingId !== null ? 'Salvar alterações' : 'Criar atividade'}</button>
             <button type="button" className="btn btn-lg btn-gray" onClick={() => { setView('list'); setEditingId(null); setErrors({}); }}>Cancelar</button>
           </div>
         </div>

@@ -4,27 +4,25 @@ import { notFound } from 'next/navigation';
 import { Hero } from '@/components/Hero';
 import { PhotoPlaceholder } from '@/components/PhotoPlaceholder';
 import { RegistrationForm } from '@/components/RegistrationForm';
-import { ACTIVITIES, getActivity } from '@/data/activities';
+import { getActivitiesFromDb, getActivityBySlugFromDb } from '@/lib/queries';
 import { fmtDays, fmtRange } from '@/lib/format';
+
+export const dynamic = 'force-dynamic';
 
 type Props = { params: Promise<{ slug: string }> };
 
-// "monitorias" tem página própria (atividades/monitorias).
-export function generateStaticParams() {
-  return ACTIVITIES.filter((a) => a.slug !== 'monitorias').map((a) => ({ slug: a.slug }));
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const a = getActivity(slug);
+  const a = await getActivityBySlugFromDb(slug);
   return { title: a?.name ?? 'Atividade' };
 }
 
 export default async function AtividadePage({ params }: Props) {
   const { slug } = await params;
-  const a = getActivity(slug);
+  const a = await getActivityBySlugFromDb(slug);
   if (!a || a.slug === 'monitorias') notFound();
 
+  const allActivities = await getActivitiesFromDb();
   const needs = a.signup !== 'nao';
   const info = [
     { label: 'Dia(s)', value: fmtDays(a.days) },
@@ -35,7 +33,7 @@ export default async function AtividadePage({ params }: Props) {
     { label: 'Inscrição prévia', value: needs ? 'Obrigatória' : 'Não é necessária' },
     { label: 'Quem pode participar', value: a.audience },
   ];
-  const others = ACTIVITIES.filter((o) => o.slug !== a.slug && o.status !== 'Inativa');
+  const others = allActivities.filter((o) => o.slug !== a.slug && o.status !== 'Inativa');
   const inscriptionsOpen = a.status === 'Inscrições abertas';
 
   return (
@@ -72,7 +70,7 @@ export default async function AtividadePage({ params }: Props) {
                 <p className="status status-ok" style={{ fontWeight: 600 }}>Participação livre</p>
               </>
             ) : inscriptionsOpen ? (
-              <RegistrationForm activityName={a.name} />
+              <RegistrationForm activitySlug={a.slug} activityName={a.name} />
             ) : (
               <>
                 <h2 style={{ fontSize: 20, fontWeight: 600 }}>Inscrições encerradas</h2>
@@ -97,7 +95,6 @@ export default async function AtividadePage({ params }: Props) {
       <section className="bg-cream" style={{ borderTop: '1px solid #ECEBD0' }}>
         <div className="container" style={{ padding: '40px 24px 56px' }}>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 18 }}>Fotos da atividade</h2>
-          {/* TODO(front/back): mostrar as fotos reais da atividade (campo photos) em vez dos espaços reservados. */}
           <div className="cards" style={{ gap: 16 }}>
             {[a.tone, '#F6E8E2', '#E6E9F8'].map((c, i) => (
               <figure key={i} style={{ flex: '1 1 260px', maxWidth: 380, margin: 0, background: '#fff', border: '1px solid #ECEBD0', borderRadius: 16, padding: 10 }}>
