@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
 import { db } from '@/prisma/db';
-import { getServerSession } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +35,10 @@ export default async function DocenteLayout({
     return <>{children}</>;
   }
 
-  const session = await getServerSession();
+  const session = await auth.api.getSession({
+    headers: hdrs,
+  });
+
   const email = session?.user?.email?.trim().toLowerCase() ?? '';
 
   if (!session || !session.user || !email) {
