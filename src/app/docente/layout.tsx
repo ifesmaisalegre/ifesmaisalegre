@@ -1,49 +1,50 @@
-import { redirect } from 'next/navigation';
+import type { ReactNode } from 'react';
 import { headers } from 'next/headers';
-import { db } from '@/prisma/db';
-import { getServerSession } from '@/lib/session';
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { DocenteLogoutButton } from '@/components/DocenteLogoutButton';
 
-export const dynamic = 'force-dynamic';
+export default async function DocenteLayout({ children }: { children: ReactNode }) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ormPublic = (db as unknown as { orm: { public: Record<string, any> } }).orm.public;
+  const email = session?.user?.email?.trim().toLowerCase();
+  if (!session || !email) {
+    redirect('/docente/login');
+  }
 
-async function isAuthorizedDocente(email: string): Promise<boolean> {
-  const normalized = email.trim().toLowerCase();
-  if (!normalized) return false;
+  const docente = await prisma.docente.findFirst({
+    where: {
+      email: { equals: email, mode: 'insensitive' },
+      active: true,
+    },
+  });
 
-  const docentes = await ormPublic.Docente.all();
-  const list = Array.isArray(docentes) ? docentes : [];
-  if (list.length === 0) return true;
+  if (!docente) {
+    redirect('/docente/login');
+  }
 
-  return list.some(
-    (d: Record<string, unknown>) =>
-      String(d.email ?? '').trim().toLowerCase() === normalized && Boolean(d.active ?? true)
+  return (
+    <div>
+      <div
+        className="container"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: 16,
+          paddingBottom: 8,
+          gap: 12,
+        }}
+      >
+        <span className="hint" style={{ fontSize: 13 }}>
+          Logado como <strong>{docente.name ?? session.user.name ?? email}</strong>
+        </span>
+        <DocenteLogoutButton />
+      </div>
+      {children}
+    </div>
   );
-}
-
-export default async function DocenteLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const hdrs = await headers();
-  const pathname = hdrs.get('x-pathname') ?? '';
-
-  if (pathname === '/docente/login' || pathname.startsWith('/docente/login/')) {
-    return <>{children}</>;
-  }
-
-  const session = await getServerSession();
-  const userEmail = session?.user?.email?.trim().toLowerCase() ?? '';
-  if (!session?.user || !userEmail) {
-    redirect('/docente/login');
-  }
-
-  const authorized = await isAuthorizedDocente(userEmail);
-  if (!authorized) {
-    redirect('/docente/login');
-  }
-
-  return <>{children}</>;
 }

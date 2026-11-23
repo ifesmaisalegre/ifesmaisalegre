@@ -1,12 +1,10 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import { Hero } from '@/components/Hero';
 import { authClient } from '@/lib/auth-client';
 
 export default function DocenteLoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -20,13 +18,16 @@ export default function DocenteLoginPage() {
     setLoading(true);
 
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+
       if (isSignUp) {
         const res = await authClient.signUp.email({
-          email: email.trim(),
+          email: normalizedEmail,
           password,
-          name: name.trim() || email.trim().split('@')[0],
+          name: name.trim() || normalizedEmail.split('@')[0],
           callbackURL: '/docente',
         });
+
         if (res.error) {
           setError(res.error.message ?? 'Não foi possível criar a conta.');
           setLoading(false);
@@ -34,10 +35,11 @@ export default function DocenteLoginPage() {
         }
       } else {
         const res = await authClient.signIn.email({
-          email: email.trim(),
+          email: normalizedEmail,
           password,
           callbackURL: '/docente',
         });
+
         if (res.error) {
           setError(res.error.message ?? 'Credenciais inválidas.');
           setLoading(false);
@@ -45,11 +47,9 @@ export default function DocenteLoginPage() {
         }
       }
 
-      router.push('/docente');
-      router.refresh();
+      window.location.assign('/docente');
     } catch {
       setError('Erro de comunicação ao autenticar.');
-    } finally {
       setLoading(false);
     }
   }
