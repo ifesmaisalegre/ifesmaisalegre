@@ -2,13 +2,15 @@ import type { Metadata } from 'next';
 import { Hero } from '@/components/Hero';
 import { GalleryUpload } from '@/components/GalleryUpload';
 import { PhotoPlaceholder } from '@/components/PhotoPlaceholder';
-import { GALLERY_PHOTOS } from '@/data/docente-demo';
+import { getApprovedGalleryPhotosFromDb } from '@/lib/queries';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: 'Galeria' };
 
-export default function GaleriaPage() {
-  // Só fotos aprovadas por um docente aparecem aqui. TODO(back): buscar do banco.
-  const approved = GALLERY_PHOTOS.filter((p) => p.status === 'approved');
+export default async function GaleriaPage() {
+  const approved = await getApprovedGalleryPhotosFromDb();
+
   return (
     <main>
       <Hero
@@ -20,8 +22,34 @@ export default function GaleriaPage() {
         <GalleryUpload />
         <div className="cards" style={{ gap: 16 }}>
           {approved.map((p) => (
-            <figure key={p.id} style={{ flex: '1 1 240px', maxWidth: 380, margin: 0, background: '#fff', border: '1px solid var(--line)', borderRadius: 16, padding: 10 }}>
-              <PhotoPlaceholder tone={p.tone} />
+            <figure
+              key={p.id}
+              style={{
+                flex: '1 1 240px',
+                maxWidth: 380,
+                margin: 0,
+                background: '#fff',
+                border: '1px solid var(--line)',
+                borderRadius: 16,
+                padding: 10,
+              }}
+            >
+              {p.imageUrl ? (
+                <img
+                  src={p.imageUrl}
+                  alt={p.caption || `Foto ${p.code}`}
+                  className="tile"
+                  style={{
+                    width: '100%',
+                    aspectRatio: '4/3',
+                    borderRadius: 10,
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              ) : (
+                <PhotoPlaceholder tone={p.tone} />
+              )}
             </figure>
           ))}
         </div>

@@ -83,6 +83,8 @@ export async function getApprovedGalleryPhotosFromDb(): Promise<GalleryPhoto[]> 
     .map((r: Record<string, unknown>, idx: number) => ({
       id: Number(r.id ?? idx + 1),
       code: String(r.code ?? ''),
+      imageUrl: typeof r.imageUrl === 'string' && r.imageUrl.trim() ? r.imageUrl : null,
+      caption: typeof r.caption === 'string' && r.caption.trim() ? r.caption : null,
       date: String(r.date ?? ''),
       status: 'approved',
       tone: String(r.tone ?? '#E6E9F8'),
@@ -96,7 +98,7 @@ export async function getMonitoriasFromDb(): Promise<Monitoria[]> {
   return list
     .sort(
       (a: Record<string, unknown>, b: Record<string, unknown>) =>
-        String(a.year ?? '').localeCompare(String(b.year ?? '')) || Number(a.id ?? 0) - Number(a.id ?? 0)
+        String(a.year ?? '').localeCompare(String(b.year ?? '')) || Number(a.id ?? 0) - Number(b.id ?? 0)
     )
     .map((r: Record<string, unknown>, idx: number) => ({
       id: Number(r.id ?? idx + 1),
@@ -142,6 +144,8 @@ export async function getAllPhotosForDocenteFromDb(): Promise<GalleryPhoto[]> {
       return {
         id: Number(r.id ?? idx + 1),
         code: String(r.code ?? ''),
+        imageUrl: typeof r.imageUrl === 'string' && r.imageUrl.trim() ? r.imageUrl : null,
+        caption: typeof r.caption === 'string' && r.caption.trim() ? r.caption : null,
         date: String(r.date ?? ''),
         status,
         tone: String(r.tone ?? '#E6E9F8'),

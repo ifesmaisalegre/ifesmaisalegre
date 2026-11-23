@@ -54,6 +54,8 @@ export type PhotoStatus = 'pending' | 'approved' | 'rejected';
 export type GalleryPhoto = {
   id: number;
   code: string;
+  imageUrl?: string | null;
+  caption?: string | null;
   date: string; // AAAA-MM-DD
   status: PhotoStatus;
   tone: string;
