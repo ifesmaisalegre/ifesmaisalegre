@@ -7,6 +7,9 @@ import { AVISO_CHIP } from './AvisoCard';
 import { fmtDate, todayISO } from '@/lib/format';
 import {
   createAvisoAction,
+  deleteAvisoAction,
+  deleteGalleryPhotoAction,
+  deleteInscricaoAction,
   moderateGalleryPhotoAction,
   toggleAvisoPublishedAction,
 } from '@/app/actions';
@@ -71,7 +74,7 @@ export function DocentePanel({
 
     setAvisos((list) => [
       {
-        id: Math.max(0, ...list.map((a) => a.id)) + 1,
+        id: res.data?.id ?? Math.max(0, ...list.map((a) => a.id)) + 1,
         title: title.trim(),
         body: body.trim(),
         category: cat,
@@ -100,6 +103,16 @@ export function DocentePanel({
     setNotice(res.message);
   }
 
+  async function handleDeleteAviso(aviso: Aviso) {
+    const res = await deleteAvisoAction({ id: aviso.id });
+    if (!res.ok) {
+      setNotice(res.message);
+      return;
+    }
+    setAvisos((l) => l.filter((x) => x.id !== aviso.id));
+    setNotice(res.message);
+  }
+
   const tabs: { id: Tab; label: string; count: string }[] = [
     { id: 'overview', label: 'Visão geral', count: '' },
     { id: 'avisos', label: 'Avisos', count: String(avisos.length) },
@@ -108,15 +121,35 @@ export function DocentePanel({
   ];
 
   async function handlePhotoStatus(id: number, status: PhotoStatus) {
-    if (status === 'approved' || status === 'rejected') {
-      const res = await moderateGalleryPhotoAction({ id, status });
-      if (!res.ok) {
-        setNotice(res.message);
-        return;
-      }
+    const res = await moderateGalleryPhotoAction({ id, status });
+    if (!res.ok) {
       setNotice(res.message);
+      return;
     }
+    setNotice(res.message);
     setPhotos((l) => l.map((p) => (p.id === id ? { ...p, status } : p)));
+  }
+
+  async function handleDeletePhoto(p: GalleryPhoto) {
+    const res = await deleteGalleryPhotoAction({ id: p.id });
+    setDelPhoto(null);
+    if (!res.ok) {
+      setNotice(res.message);
+      return;
+    }
+    setPhotos((l) => l.filter((x) => x.id !== p.id));
+    setNotice(`Foto ${p.code} excluída.`);
+  }
+
+  async function handleDeleteInscricao(r: Inscricao) {
+    const res = await deleteInscricaoAction({ id: r.id });
+    setDelInscr(null);
+    if (!res.ok) {
+      setNotice(res.message);
+      return;
+    }
+    setInscr((l) => l.filter((x) => x.id !== r.id));
+    setNotice(`Inscrição de ${r.name} cancelada.`);
   }
 
   const rows = inscr.filter((r) => filter === 'all' || r.activity === filter);
@@ -172,6 +205,7 @@ export function DocentePanel({
           <>
             <h2 style={{ fontSize: 24, fontWeight: 600, marginBottom: 4 }}>Avisos</h2>
             <p style={{ color: 'var(--ink-3)', marginBottom: 20 }}>Crie comunicados para os alunos. Só os avisos publicados e dentro da validade aparecem no site.</p>
+            {noticeEl}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' }}>
               <form className="card form" style={{ flex: '1 1 320px' }} onSubmit={(e) => { e.preventDefault(); void addAviso(true); }}>
                 <h3 style={{ fontSize: 17, fontWeight: 600 }}>Novo aviso</h3>
@@ -225,7 +259,7 @@ export function DocentePanel({
                       <button type="button" className="btn btn-outline btn-sm" onClick={() => void handleToggleAviso(a)}>
                         {a.published ? 'Despublicar' : 'Publicar'}
                       </button>
-                      <button type="button" className="btn btn-danger-outline btn-sm" onClick={() => setAvisos((l) => l.filter((x) => x.id !== a.id))}>Excluir</button>
+                      <button type="button" className="btn btn-danger-outline btn-sm" onClick={() => void handleDeleteAviso(a)}>Excluir</button>
                     </div>
                   </article>
                 ))}
@@ -250,7 +284,16 @@ export function DocentePanel({
             <div className="cards" style={{ gap: 16 }}>
               {photos.filter((p) => p.status === photoTab).map((p) => (
                 <article key={p.id} className="card" style={{ flex: '1 1 210px', maxWidth: 280, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <PhotoPlaceholder tone={p.tone} />
+                  {p.imageUrl ? (
+                    <img
+                      src={p.imageUrl}
+                      alt={p.caption || `Foto ${p.code}`}
+                      className="tile"
+                      style={{ width: '100%', aspectRatio: '4/3', borderRadius: 10, objectFit: 'cover', display: 'block' }}
+                    />
+                  ) : (
+                    <PhotoPlaceholder tone={p.tone} />
+                  )}
                   <div>
                     <p style={{ fontSize: 14, fontWeight: 600 }}>Foto {p.code}</p>
                     <p className="hint">Enviada em {fmtDate(p.date)}</p>
@@ -267,7 +310,7 @@ export function DocentePanel({
                     <>
                       <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--danger)' }}>Excluir esta foto definitivamente?</p>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button type="button" className="btn btn-danger btn-sm" style={{ flex: 1 }} onClick={() => { setPhotos((l) => l.filter((x) => x.id !== p.id)); setDelPhoto(null); setNotice(`Foto ${p.code} excluída.`); }}>Sim, excluir</button>
+                        <button type="button" className="btn btn-danger btn-sm" style={{ flex: 1 }} onClick={() => void handleDeletePhoto(p)}>Sim, excluir</button>
                         <button type="button" className="btn btn-gray btn-sm" style={{ flex: 1 }} onClick={() => setDelPhoto(null)}>Cancelar</button>
                       </div>
                     </>
@@ -314,7 +357,7 @@ export function DocentePanel({
                     <span>
                       {delInscr === r.id ? (
                         <span className="actions">
-                          <button type="button" className="btn btn-danger btn-sm" onClick={() => { setInscr((l) => l.filter((x) => x.id !== r.id)); setDelInscr(null); setNotice(`Inscrição de ${r.name} cancelada.`); }}>Confirmar</button>
+                          <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDeleteInscricao(r)}>Confirmar</button>
                           <button type="button" className="btn btn-gray btn-sm" onClick={() => setDelInscr(null)}>Voltar</button>
                         </span>
                       ) : (

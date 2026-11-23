@@ -1,25 +1,28 @@
 'use server';
 
-import { put } from '@vercel/blob';
+import { del, put } from '@vercel/blob';
 import { revalidatePath } from 'next/cache';
 import { db } from '@/prisma/db';
 import { getServerSession } from '@/lib/session';
 import {
   activityStatusSchema,
+  activityUpsertSchema,
   avisoCreateSchema,
   avisoToggleSchema,
   galleryModerateSchema,
   galleryPhotoUploadSchema,
+  idSchema,
   inscricaoSchema,
-  monitoriaCreateSchema,
+  monitoriaUpsertSchema,
 } from '@/lib/schemas';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ormPublic = (db as unknown as { orm: { public: Record<string, any> } }).orm.public;
 
-export type ActionResult = {
+export type ActionResult<T = undefined> = {
   ok: boolean;
   message: string;
+  data?: T;
 };
 
 const ALLOWED_IMAGE_TYPES = new Set([
@@ -30,7 +33,9 @@ const ALLOWED_IMAGE_TYPES = new Set([
 ]);
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB
 
-async function requireDocenteSession(): Promise<{ ok: true; email: string } | { ok: false; message: string }> {
+async function requireDocenteSession(): Promise<
+  { ok: true; email: string } | { ok: false; message: string }
+> {
   const session = await getServerSession();
   const userEmail = session?.user?.email?.trim().toLowerCase();
   if (!session?.user || !userEmail) {
@@ -80,7 +85,7 @@ export async function createInscricaoAction(input: {
 
   const status = String(activity.status ?? '');
   const signup = String(activity.signup ?? 'sim');
-  if (signup === 'nao' || status === 'Encerrada' || status === 'Inativa') {
+  if (signup === 'nao' || status === 'Inscrições encerradas' || status === 'Inativa') {
     return { ok: false, message: 'As inscrições para esta atividade estão encerradas.' };
   }
 
@@ -123,6 +128,23 @@ export async function createInscricaoAction(input: {
   revalidatePath('/docente');
 
   return { ok: true, message: 'Inscrição confirmada com sucesso!' };
+}
+
+export async function deleteInscricaoAction(input: { id: number }): Promise<ActionResult> {
+  const authCheck = await requireDocenteSession();
+  if (!authCheck.ok) return authCheck;
+
+  const parsed = idSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: 'Inscrição inválida.' };
+  }
+
+  await ormPublic.Inscricao.where({ id: parsed.data.id }).delete();
+
+  revalidatePath('/docente');
+  revalidatePath('/atividades');
+
+  return { ok: true, message: 'Inscrição cancelada com sucesso.' };
 }
 
 export async function uploadGalleryPhotoAction(formData: FormData): Promise<ActionResult> {
@@ -193,9 +215,135 @@ export async function uploadGalleryPhotoAction(formData: FormData): Promise<Acti
   };
 }
 
+export async function upsertActivityAction(input: {
+  id?: number;
+  slug: string;
+  name: string;
+  category: string;
+  description: string;
+  daysJson: string;
+  start: string;
+  end?: string;
+  place: string;
+  responsible: string;
+  email: string;
+  spots?: number | null;
+  audience: string;
+  status: 'Inscrições abertas' | 'Inscrições encerradas' | 'Ativa' | 'Inativa';
+  signup: 'sim' | 'nao';
+  tone?: string;
+}): Promise<ActionResult<{ id: number; slug: string }>> {
+  const authCheck = await requireDocenteSession();
+  if (!authCheck.ok) return authCheck;
+
+  const parsed = activityUpsertSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? 'Dados inválidos para salvar a atividade.',
+    };
+  }
+
+  const data = parsed.data;
+  const all = await ormPublic.Activity.all();
+  const list = Array.isArray(all) ? all : [];
+
+  if (data.id) {
+    await ormPublic.Activity.where({ id: data.id }).update({
+      name: data.name,
+      category: data.category,
+      description: data.description,
+      days: data.daysJson,
+      start: data.start,
+      end: data.end ?? '',
+      place: data.place,
+      responsible: data.responsible,
+      email: data.email,
+      spots: data.signup === 'nao' ? null : (data.spots ?? null),
+      audience: data.audience,
+      status: data.status,
+      signup: data.signup,
+      updatedAt: new Date(),
+    });
+
+    revalidatePath('/');
+    revalidatePath('/atividades');
+    revalidatePath(`/atividades/${data.slug}`);
+    revalidatePath('/docente');
+    revalidatePath('/docente/atividades');
+
+    return {
+      ok: true,
+      message: `Atividade "${data.name}" atualizada.`,
+      data: { id: data.id, slug: data.slug },
+    };
+  }
+
+  const baseSlug = data.slug || `atividade-${Date.now()}`;
+  const slugConflict = list.some(
+    (a: Record<string, unknown>) => String(a.slug ?? '') === baseSlug
+  );
+  const finalSlug = slugConflict ? `${baseSlug}-${Date.now().toString(36)}` : baseSlug;
+
+  const created = await ormPublic.Activity.create({
+    slug: finalSlug,
+    name: data.name,
+    category: data.category,
+    description: data.description,
+    days: data.daysJson,
+    start: data.start,
+    end: data.end ?? '',
+    place: data.place,
+    responsible: data.responsible,
+    email: data.email,
+    spots: data.signup === 'nao' ? null : (data.spots ?? null),
+    audience: data.audience,
+    status: data.status,
+    signup: data.signup,
+    tone: data.tone || '#E6E9F8',
+    updatedAt: new Date(),
+  });
+
+  const refreshed = await ormPublic.Activity.all();
+  const found = (Array.isArray(refreshed) ? refreshed : []).find(
+    (a: Record<string, unknown>) => String(a.slug ?? '') === finalSlug
+  ) as Record<string, unknown> | undefined;
+  const newId = Number(created?.id ?? found?.id ?? Date.now());
+
+  revalidatePath('/');
+  revalidatePath('/atividades');
+  revalidatePath('/docente');
+  revalidatePath('/docente/atividades');
+
+  return {
+    ok: true,
+    message: `Atividade "${data.name}" criada.`,
+    data: { id: newId, slug: finalSlug },
+  };
+}
+
+export async function deleteActivityAction(input: { id: number }): Promise<ActionResult> {
+  const authCheck = await requireDocenteSession();
+  if (!authCheck.ok) return authCheck;
+
+  const parsed = idSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: 'Atividade inválida.' };
+  }
+
+  await ormPublic.Activity.where({ id: parsed.data.id }).delete();
+
+  revalidatePath('/');
+  revalidatePath('/atividades');
+  revalidatePath('/docente');
+  revalidatePath('/docente/atividades');
+
+  return { ok: true, message: 'Atividade excluída com sucesso.' };
+}
+
 export async function updateActivityStatusAction(input: {
   id: number;
-  status: 'Inscrições abertas' | 'Vagas esgotadas' | 'Encerrada' | 'Inativa';
+  status: 'Inscrições abertas' | 'Inscrições encerradas' | 'Ativa' | 'Inativa';
   signup: 'sim' | 'nao';
 }): Promise<ActionResult> {
   const authCheck = await requireDocenteSession();
@@ -226,7 +374,7 @@ export async function createAvisoAction(input: {
   target?: string;
   until?: string;
   published?: boolean;
-}): Promise<ActionResult> {
+}): Promise<ActionResult<{ id: number }>> {
   const authCheck = await requireDocenteSession();
   if (!authCheck.ok) return authCheck;
 
@@ -239,7 +387,7 @@ export async function createAvisoAction(input: {
   }
 
   const todayIso = new Date().toISOString().slice(0, 10);
-  await ormPublic.Aviso.create({
+  const created = await ormPublic.Aviso.create({
     title: parsed.data.title,
     body: parsed.data.body,
     category: parsed.data.category,
@@ -250,11 +398,19 @@ export async function createAvisoAction(input: {
     updatedAt: new Date(),
   });
 
+  const all = await ormPublic.Aviso.all();
+  const list = Array.isArray(all) ? all : [];
+  const lastId = list.reduce(
+    (max: number, r: Record<string, unknown>) => Math.max(max, Number(r.id ?? 0)),
+    0
+  );
+  const newId = Number(created?.id ?? lastId) || Date.now();
+
   revalidatePath('/');
   revalidatePath('/avisos');
   revalidatePath('/docente');
 
-  return { ok: true, message: 'Aviso salvo com sucesso.' };
+  return { ok: true, message: 'Aviso salvo com sucesso.', data: { id: newId } };
 }
 
 export async function toggleAvisoPublishedAction(input: {
@@ -281,20 +437,39 @@ export async function toggleAvisoPublishedAction(input: {
   return { ok: true, message: 'Status do aviso atualizado.' };
 }
 
-export async function createMonitoriaAction(input: {
+export async function deleteAvisoAction(input: { id: number }): Promise<ActionResult> {
+  const authCheck = await requireDocenteSession();
+  if (!authCheck.ok) return authCheck;
+
+  const parsed = idSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: 'Aviso inválido.' };
+  }
+
+  await ormPublic.Aviso.where({ id: parsed.data.id }).delete();
+
+  revalidatePath('/');
+  revalidatePath('/avisos');
+  revalidatePath('/docente');
+
+  return { ok: true, message: 'Aviso excluído com sucesso.' };
+}
+
+export async function upsertMonitoriaAction(input: {
+  id?: number;
   title: string;
-  year: '1' | '2' | '3' | 'Todos';
+  year: '1' | '2' | '3';
   exclusive?: string;
   daysJson: string;
   start: string;
   end: string;
   place: string;
   monitor: string;
-}): Promise<ActionResult> {
+}): Promise<ActionResult<{ id: number }>> {
   const authCheck = await requireDocenteSession();
   if (!authCheck.ok) return authCheck;
 
-  const parsed = monitoriaCreateSchema.safeParse(input);
+  const parsed = monitoriaUpsertSchema.safeParse(input);
   if (!parsed.success) {
     return {
       ok: false,
@@ -302,28 +477,96 @@ export async function createMonitoriaAction(input: {
     };
   }
 
-  await ormPublic.Monitoria.create({
-    title: parsed.data.title,
-    year: parsed.data.year,
-    exclusive: parsed.data.exclusive ?? '',
-    days: parsed.data.daysJson,
-    start: parsed.data.start,
-    end: parsed.data.end,
-    place: parsed.data.place,
-    monitor: parsed.data.monitor,
+  const data = parsed.data;
+  if (data.id) {
+    await ormPublic.Monitoria.where({ id: data.id }).update({
+      title: data.title,
+      year: data.year,
+      exclusive: data.exclusive ?? '',
+      days: data.daysJson,
+      start: data.start,
+      end: data.end,
+      place: data.place,
+      monitor: data.monitor,
+      updatedAt: new Date(),
+    });
+
+    revalidatePath('/atividades/monitorias');
+    revalidatePath('/docente');
+    revalidatePath('/docente/monitorias');
+
+    return {
+      ok: true,
+      message: `Monitoria de "${data.title}" atualizada.`,
+      data: { id: data.id },
+    };
+  }
+
+  const created = await ormPublic.Monitoria.create({
+    title: data.title,
+    year: data.year,
+    exclusive: data.exclusive ?? '',
+    days: data.daysJson,
+    start: data.start,
+    end: data.end,
+    place: data.place,
+    monitor: data.monitor,
     updatedAt: new Date(),
   });
+
+  const all = await ormPublic.Monitoria.all();
+  const list = Array.isArray(all) ? all : [];
+  const lastId = list.reduce(
+    (max: number, r: Record<string, unknown>) => Math.max(max, Number(r.id ?? 0)),
+    0
+  );
+  const newId = Number(created?.id ?? lastId) || Date.now();
 
   revalidatePath('/atividades/monitorias');
   revalidatePath('/docente');
   revalidatePath('/docente/monitorias');
 
-  return { ok: true, message: 'Monitoria cadastrada com sucesso.' };
+  return {
+    ok: true,
+    message: `Monitoria de "${data.title}" cadastrada.`,
+    data: { id: newId },
+  };
+}
+
+export async function createMonitoriaAction(input: {
+  title: string;
+  year: '1' | '2' | '3';
+  exclusive?: string;
+  daysJson: string;
+  start: string;
+  end: string;
+  place: string;
+  monitor: string;
+}): Promise<ActionResult<{ id: number }>> {
+  return upsertMonitoriaAction(input);
+}
+
+export async function deleteMonitoriaAction(input: { id: number }): Promise<ActionResult> {
+  const authCheck = await requireDocenteSession();
+  if (!authCheck.ok) return authCheck;
+
+  const parsed = idSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: 'Monitoria inválida.' };
+  }
+
+  await ormPublic.Monitoria.where({ id: parsed.data.id }).delete();
+
+  revalidatePath('/atividades/monitorias');
+  revalidatePath('/docente');
+  revalidatePath('/docente/monitorias');
+
+  return { ok: true, message: 'Monitoria excluída com sucesso.' };
 }
 
 export async function moderateGalleryPhotoAction(input: {
   id: number;
-  status: 'approved' | 'rejected';
+  status: 'approved' | 'rejected' | 'pending';
 }): Promise<ActionResult> {
   const authCheck = await requireDocenteSession();
   if (!authCheck.ok) return authCheck;
@@ -362,8 +605,42 @@ export async function moderateGalleryPhotoAction(input: {
   revalidatePath('/galeria');
   revalidatePath('/docente');
 
-  return {
-    ok: true,
-    message: parsed.data.status === 'approved' ? 'Foto aprovada na galeria.' : 'Foto rejeitada.',
+  const labels: Record<'approved' | 'rejected' | 'pending', string> = {
+    approved: 'Foto aprovada na galeria.',
+    rejected: 'Foto recusada.',
+    pending: 'Foto retornada para avaliação.',
   };
+
+  return { ok: true, message: labels[parsed.data.status] };
+}
+
+export async function deleteGalleryPhotoAction(input: { id: number }): Promise<ActionResult> {
+  const authCheck = await requireDocenteSession();
+  if (!authCheck.ok) return authCheck;
+
+  const parsed = idSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: 'Foto inválida.' };
+  }
+
+  const photos = await ormPublic.GalleryPhoto.all();
+  const photo = (Array.isArray(photos) ? photos : []).find(
+    (p: Record<string, unknown>) => Number(p.id) === parsed.data.id
+  ) as Record<string, unknown> | undefined;
+
+  const imageUrl = typeof photo?.imageUrl === 'string' ? photo.imageUrl : '';
+  if (imageUrl && process.env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      await del(imageUrl);
+    } catch {
+      // Ignora erro caso o arquivo não exista no Blob
+    }
+  }
+
+  await ormPublic.GalleryPhoto.where({ id: parsed.data.id }).delete();
+
+  revalidatePath('/galeria');
+  revalidatePath('/docente');
+
+  return { ok: true, message: 'Foto excluída definitivamente.' };
 }

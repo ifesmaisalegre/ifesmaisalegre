@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { updateActivityStatusAction } from '@/app/actions';
+import { deleteActivityAction, upsertActivityAction } from '@/app/actions';
 import { DAY_FULL, DAY_ORDER, fmtRange } from '@/lib/format';
 import type { Activity, ActivityStatus, Category, Day } from '@/lib/types';
 
@@ -71,6 +71,7 @@ export function AdminActivities({
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState('');
   const [form, setForm] = useState<Form>(emptyForm());
   const [days, setDays] = useState<Day[]>([]);
@@ -163,6 +164,7 @@ export function AdminActivities({
     if (Object.keys(er).some((k) => er[k as keyof Errors])) return;
 
     const sortedDays = DAY_ORDER.filter((d) => days.includes(d));
+    const currentItem = editingId !== null ? items.find((x) => x.id === editingId) : undefined;
     const base = {
       name: form.name.trim(),
       category: form.category,
@@ -180,38 +182,62 @@ export function AdminActivities({
       photos: photos.slice(),
     };
 
-    if (editingId !== null) {
-      const mappedStatus =
-        base.status === 'Inscrições encerradas'
-          ? 'Encerrada'
-          : base.status === 'Ativa'
-            ? 'Inscrições abertas'
-            : base.status;
-      const res = await updateActivityStatusAction({
-        id: editingId,
-        status: mappedStatus,
+    setSaving(true);
+    try {
+      const res = await upsertActivityAction({
+        id: editingId ?? undefined,
+        slug: currentItem?.slug || slugify(base.name),
+        name: base.name,
+        category: base.category,
+        description: base.description,
+        daysJson: JSON.stringify(base.days),
+        start: base.start,
+        end: base.end,
+        place: base.place,
+        responsible: base.responsible,
+        email: base.email,
+        spots: needsSignup && base.spots ? Number(base.spots) : null,
+        audience: base.audience,
+        status: base.status,
         signup: base.signup,
+        tone: currentItem?.tone || '#E6E9F8',
       });
+
       if (!res.ok) {
         setNotice(res.message);
         return;
       }
-      setItems((l) => l.map((x) => (x.id === editingId ? { ...x, ...base } : x)));
-      setNotice(`Atividade "${base.name}" atualizada.`);
-    } else {
-      setItems((l) => [
-        ...l,
-        {
-          ...base,
-          id: Math.max(0, ...l.map((x) => x.id)) + 1,
-          slug: slugify(base.name),
-          tone: '#E6E9F8',
-        },
-      ]);
-      setNotice(`Atividade "${base.name}" criada.`);
+
+      if (editingId !== null) {
+        setItems((l) => l.map((x) => (x.id === editingId ? { ...x, ...base } : x)));
+      } else {
+        setItems((l) => [
+          ...l,
+          {
+            ...base,
+            id: res.data?.id ?? Math.max(0, ...l.map((x) => x.id)) + 1,
+            slug: res.data?.slug ?? slugify(base.name),
+            tone: '#E6E9F8',
+          },
+        ]);
+      }
+      setNotice(res.message);
+      setView('list');
+      setEditingId(null);
+    } finally {
+      setSaving(false);
     }
-    setView('list');
-    setEditingId(null);
+  }
+
+  async function handleDelete(a: Activity) {
+    const res = await deleteActivityAction({ id: a.id });
+    setDeletingId(null);
+    if (!res.ok) {
+      setNotice(res.message);
+      return;
+    }
+    setItems((l) => l.filter((x) => x.id !== a.id));
+    setNotice(`Atividade "${a.name}" excluída.`);
   }
 
   const qn = q.trim().toLowerCase();
@@ -307,7 +333,7 @@ export function AdminActivities({
                       <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--danger)' }}>Excluir esta atividade?</span>
                         <span className="actions">
-                          <button type="button" className="btn btn-danger btn-sm" onClick={() => { setItems((l) => l.filter((x) => x.id !== a.id)); setDeletingId(null); setNotice(`Atividade "${a.name}" excluída.`); }}>Sim, excluir</button>
+                          <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(a)}>Sim, excluir</button>
                           <button type="button" className="btn btn-gray btn-sm" onClick={() => setDeletingId(null)}>Cancelar</button>
                         </span>
                       </span>
@@ -450,7 +476,9 @@ export function AdminActivities({
           </div>
 
           <div className="actions" style={{ marginTop: 24, gap: 10 }}>
-            <button type="button" className="btn btn-lg" onClick={() => void save()}>{editingId !== null ? 'Salvar alterações' : 'Criar atividade'}</button>
+            <button type="button" className="btn btn-lg" disabled={saving} onClick={() => void save()}>
+              {saving ? 'Salvando...' : editingId !== null ? 'Salvar alterações' : 'Criar atividade'}
+            </button>
             <button type="button" className="btn btn-lg btn-gray" onClick={() => { setView('list'); setEditingId(null); setErrors({}); }}>Cancelar</button>
           </div>
         </div>

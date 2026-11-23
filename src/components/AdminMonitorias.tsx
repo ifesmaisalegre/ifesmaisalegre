@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { createMonitoriaAction } from '@/app/actions';
+import { deleteMonitoriaAction, upsertMonitoriaAction } from '@/app/actions';
 import { DAY_FULL, fmtDaysShort, fmtRange } from '@/lib/format';
 import type { Day, Monitoria } from '@/lib/types';
 
@@ -38,6 +38,7 @@ export function AdminMonitorias({
   const [view, setView] = useState<'list' | 'form'>('list');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState('');
   const [form, setForm] = useState<Form>(emptyForm());
   const [days, setDays] = useState<Day[]>([]);
@@ -107,34 +108,51 @@ export function AdminMonitorias({
       monitor: form.monitor.trim(),
     };
 
-    if (editingId !== null) {
-      setItems((l) => l.map((x) => (x.id === editingId ? { ...rec, id: x.id } : x)));
-      setNotice(`Monitoria de "${rec.title}" atualizada.`);
+    setSaving(true);
+    try {
+      const res = await upsertMonitoriaAction({
+        id: editingId ?? undefined,
+        title: rec.title,
+        year: rec.year,
+        exclusive: rec.exclusive,
+        daysJson: JSON.stringify(rec.days),
+        start: rec.start,
+        end: rec.end,
+        place: rec.place,
+        monitor: rec.monitor,
+      });
+
+      if (!res.ok) {
+        setNotice(res.message);
+        return;
+      }
+
+      if (editingId !== null) {
+        setItems((l) => l.map((x) => (x.id === editingId ? { ...rec, id: x.id } : x)));
+      } else {
+        setItems((l) => [
+          ...l,
+          { ...rec, id: res.data?.id ?? Math.max(0, ...l.map((x) => x.id)) + 1 },
+        ]);
+      }
+
+      setNotice(res.message);
       setView('list');
       setEditingId(null);
-      return;
+    } finally {
+      setSaving(false);
     }
+  }
 
-    const res = await createMonitoriaAction({
-      title: rec.title,
-      year: rec.year,
-      exclusive: rec.exclusive,
-      daysJson: JSON.stringify(rec.days),
-      start: rec.start,
-      end: rec.end,
-      place: rec.place,
-      monitor: rec.monitor,
-    });
-
+  async function handleDelete(m: Monitoria) {
+    const res = await deleteMonitoriaAction({ id: m.id });
+    setDeletingId(null);
     if (!res.ok) {
       setNotice(res.message);
       return;
     }
-
-    setItems((l) => [...l, { ...rec, id: Math.max(0, ...l.map((x) => x.id)) + 1 }]);
-    setNotice(res.message);
-    setView('list');
-    setEditingId(null);
+    setItems((l) => l.filter((x) => x.id !== m.id));
+    setNotice(`Monitoria de "${m.title}" excluída.`);
   }
 
   const qn = q.trim().toLowerCase();
@@ -218,7 +236,7 @@ export function AdminMonitorias({
                       <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--danger)' }}>Excluir esta monitoria?</span>
                         <span className="actions">
-                          <button type="button" className="btn btn-danger btn-sm" onClick={() => { setItems((l) => l.filter((x) => x.id !== m.id)); setDeletingId(null); setNotice(`Monitoria de "${m.title}" excluída.`); }}>Sim, excluir</button>
+                          <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(m)}>Sim, excluir</button>
                           <button type="button" className="btn btn-gray btn-sm" onClick={() => setDeletingId(null)}>Cancelar</button>
                         </span>
                       </span>
@@ -284,7 +302,9 @@ export function AdminMonitorias({
             {text('monitor', 'mm-mon', 'Monitor(a) *')}
           </div>
           <div className="actions" style={{ marginTop: 24, gap: 10 }}>
-            <button type="button" className="btn btn-lg" onClick={() => void save()}>{editingId !== null ? 'Salvar alterações' : 'Criar monitoria'}</button>
+            <button type="button" className="btn btn-lg" disabled={saving} onClick={() => void save()}>
+              {saving ? 'Salvando...' : editingId !== null ? 'Salvar alterações' : 'Criar monitoria'}
+            </button>
             <button type="button" className="btn btn-lg btn-gray" onClick={() => { setView('list'); setEditingId(null); setErrors({}); }}>Cancelar</button>
           </div>
         </div>
