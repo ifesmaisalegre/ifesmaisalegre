@@ -3,6 +3,21 @@
 import { useState } from 'react';
 import { authClient } from '@/lib/auth-client';
 
+function clearAuthCookies() {
+  if (typeof document === 'undefined') return;
+  const cookieNames = [
+    'better-auth.session_token',
+    '__Secure-better-auth.session_token',
+    'better-auth.session_data',
+    '__Secure-better-auth.session_data',
+  ];
+
+  for (const name of cookieNames) {
+    document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
+    document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=None; Secure`;
+  }
+}
+
 export function DocenteLogoutButton() {
   const [signingOut, setSigningOut] = useState(false);
 
@@ -11,18 +26,12 @@ export function DocenteLogoutButton() {
     setSigningOut(true);
 
     try {
-      await authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            window.location.assign('/docente/login');
-          },
-          onError: () => {
-            window.location.assign('/docente/login');
-          },
-        },
-      });
+      await authClient.signOut();
     } catch {
-      window.location.assign('/docente/login');
+      // prossegue para limpar cookies locais e redirecionar
+    } finally {
+      clearAuthCookies();
+      window.location.replace('/docente/login');
     }
   }
 

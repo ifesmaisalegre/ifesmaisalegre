@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Hero } from '@/components/Hero';
 import { authClient } from '@/lib/auth-client';
+import { DocenteLogoutButton } from '@/components/DocenteLogoutButton';
 
 export default function DocenteLoginPage() {
   const [email, setEmail] = useState('');
@@ -11,12 +12,30 @@ export default function DocenteLoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [hasActiveSession, setHasActiveSession] = useState(false);
 
-  async function waitForSessionAndNavigate() {
-    for (let attempt = 0; attempt < 5; attempt += 1) {
+  useEffect(() => {
+    let active = true;
+    authClient
+      .getSession()
+      .then((res) => {
+        if (active && res?.data?.session) {
+          setHasActiveSession(true);
+        }
+      })
+      .catch(() => {
+        // ignora erro de leitura inicial de sessão
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function finalizeAuthNavigation() {
+    for (let i = 0; i < 6; i += 1) {
       await new Promise((resolve) => setTimeout(resolve, 150));
-      const sessionRes = await authClient.getSession();
-      if (sessionRes?.data?.session) {
+      const check = await authClient.getSession();
+      if (check?.data?.session) {
         break;
       }
     }
@@ -58,7 +77,7 @@ export default function DocenteLoginPage() {
         }
       }
 
-      await waitForSessionAndNavigate();
+      await finalizeAuthNavigation();
     } catch {
       setError('Erro de comunicação ao autenticar.');
       setLoading(false);
@@ -73,9 +92,21 @@ export default function DocenteLoginPage() {
       />
       <div className="container" style={{ maxWidth: 480, padding: '40px 24px 64px' }}>
         <div className="card" style={{ padding: 28 }}>
-          <p className="hint" style={{ fontWeight: 600, marginBottom: 4 }}>
-            IFES+Alegre · Acesso Restrito
-          </p>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+              marginBottom: 4,
+            }}
+          >
+            <p className="hint" style={{ fontWeight: 600, margin: 0 }}>
+              IFES+Alegre · Acesso Restrito
+            </p>
+            {hasActiveSession && <DocenteLogoutButton />}
+          </div>
+
           <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 18 }}>
             {isSignUp ? 'Cadastrar credencial docente' : 'Entrar no painel'}
           </h2>
