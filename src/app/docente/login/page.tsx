@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { Hero } from '@/components/Hero';
 import { authClient } from '@/lib/auth-client';
 
 export default function DocenteLoginPage() {
@@ -54,82 +55,93 @@ export default function DocenteLoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 py-12">
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-          IFES+Alegre · Área Docente
-        </p>
-        <h1 className="mt-1 text-2xl font-bold text-zinc-900">
-          {isSignUp ? 'Ativar acesso docente' : 'Entrar na Área Docente'}
-        </h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          Acesse o painel para gerenciar atividades, monitorias, avisos e moderação da galeria.
-        </p>
+    <main>
+      <Hero
+        title={isSignUp ? 'Ativar acesso docente' : 'Área Docente'}
+        subtitle="Acesse o painel para gerenciar atividades, monitorias, avisos e moderação da galeria."
+      />
+      <div className="container" style={{ maxWidth: 480, padding: '40px 24px 64px' }}>
+        <div className="card" style={{ padding: 28 }}>
+          <p className="hint" style={{ fontWeight: 600, marginBottom: 4 }}>
+            IFES+Alegre · Acesso Restrito
+          </p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 18 }}>
+            {isSignUp ? 'Cadastrar credencial docente' : 'Entrar no painel'}
+          </h2>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          {isSignUp && (
-            <div>
-              <label className="block text-sm font-medium text-zinc-700">Nome completo</label>
+          <form onSubmit={(e) => void handleSubmit(e)} className="form" style={{ gap: 16 }}>
+            {isSignUp && (
+              <div className="field">
+                <label htmlFor="d-name">Nome completo</label>
+                <input
+                  id="d-name"
+                  type="text"
+                  required
+                  className="input"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ex.: Prof. Maria Silva"
+                />
+              </div>
+            )}
+
+            <div className="field">
+              <label htmlFor="d-email">E-mail institucional</label>
               <input
-                type="text"
+                id="d-email"
+                type="email"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
-                placeholder="Ex.: Prof. Maria Silva"
+                className="input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="docente@ifes.edu.br"
               />
             </div>
-          )}
 
-          <div>
-            <label className="block text-sm font-medium text-zinc-700">E-mail institucional</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
-              placeholder="docente@ifes.edu.br"
-            />
-          </div>
+            <div className="field">
+              <label htmlFor="d-password">Senha</label>
+              <input
+                id="d-password"
+                type="password"
+                required
+                className="input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-zinc-700">Senha</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
-              placeholder="••••••••"
-            />
-          </div>
+            {error && (
+              <p role="alert" className="status status-err">
+                {error}
+              </p>
+            )}
 
-          {error && (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </p>
-          )}
+            <button type="submit" className="btn btn-lg" disabled={loading} style={{ width: '100%' }}>
+              {loading ? 'Aguarde...' : isSignUp ? 'Criar conta e entrar' : 'Entrar'}
+            </button>
+          </form>
 
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50"
+            type="button"
+            onClick={() => {
+              setIsSignUp((prev) => !prev);
+              setError('');
+            }}
+            style={{
+              marginTop: 16,
+              width: '100%',
+              background: 'none',
+              border: 0,
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 500,
+              color: 'var(--ink-2)',
+            }}
           >
-            {loading ? 'Aguarde...' : isSignUp ? 'Criar conta e entrar' : 'Entrar'}
+            {isSignUp ? 'Já possui conta? Fazer login' : 'Primeiro acesso? Cadastrar credencial'}
           </button>
-        </form>
-
-        <button
-          type="button"
-          onClick={() => {
-            setIsSignUp((prev) => !prev);
-            setError('');
-          }}
-          className="mt-4 w-full text-center text-xs font-medium text-zinc-600 hover:text-zinc-900"
-        >
-          {isSignUp ? 'Já possui conta? Fazer login' : 'Primeiro acesso? Cadastrar credencial'}
-        </button>
+        </div>
       </div>
     </main>
   );
