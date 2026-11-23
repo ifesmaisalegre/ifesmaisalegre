@@ -9,7 +9,10 @@ const SESSION_COOKIE_NAMES = [
 ];
 
 function hasSessionCookie(request: NextRequest): boolean {
-  return SESSION_COOKIE_NAMES.some((name) => Boolean(request.cookies.get(name)?.value));
+  return SESSION_COOKIE_NAMES.some((name) => {
+    const val = request.cookies.get(name)?.value;
+    return typeof val === 'string' && val.trim().length > 0;
+  });
 }
 
 export function middleware(request: NextRequest) {

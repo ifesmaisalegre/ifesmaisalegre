@@ -15,7 +15,7 @@ async function isAuthorizedDocente(email: string): Promise<boolean> {
 
   const docentes = await ormPublic.Docente.all();
   const list = Array.isArray(docentes) ? docentes : [];
-  if (list.length === 0) return true;
+  if (list.length === 0) return false;
 
   return list.some(
     (d: Record<string, unknown>) =>
@@ -39,7 +39,7 @@ export default async function DocenteLayout({
   const session = await getServerSession();
   const email = session?.user?.email?.trim().toLowerCase() ?? '';
 
-  if (!session || !email) {
+  if (!session || !session.user || !email) {
     redirect('/docente/login');
   }
 
