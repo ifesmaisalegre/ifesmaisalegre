@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { db } from '@/prisma/db';
 import { getServerSession } from '@/lib/session';
 import { DocenteLogoutButton } from '@/components/DocenteLogoutButton';
@@ -28,7 +27,7 @@ export default async function DocenteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession({ headers: await headers() });
+  const session = await getServerSession();
   const email = session?.user?.email?.trim().toLowerCase() ?? '';
 
   if (!session || !email) {
