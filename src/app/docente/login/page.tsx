@@ -12,10 +12,15 @@ export default function DocenteLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function redirectToPanel() {
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    await authClient.getSession();
-    window.location.replace('/docente');
+  async function waitForSessionAndNavigate() {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      const sessionRes = await authClient.getSession();
+      if (sessionRes?.data?.session) {
+        break;
+      }
+    }
+    window.location.assign('/docente');
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -53,7 +58,7 @@ export default function DocenteLoginPage() {
         }
       }
 
-      await redirectToPanel();
+      await waitForSessionAndNavigate();
     } catch {
       setError('Erro de comunicação ao autenticar.');
       setLoading(false);
