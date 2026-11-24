@@ -44,7 +44,7 @@ export default async function DocentePage() {
           <Link href="/docente/atividades" className="btn btn-ghost" style={{ fontSize: 13 }}>
             Atividades e monitorias
           </Link>
-          <Link href="/docente/contatos" className="btn btn-ghost" style={{ fontSize: 13 }}>
+          <Link href="/docente/contato" className="btn btn-ghost" style={{ fontSize: 13 }}>
             Gerenciar contatos
           </Link>
           <Link href="/docente/acessos" className="btn btn-ghost" style={{ fontSize: 13 }}>
