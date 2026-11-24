@@ -1,17 +1,23 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, type FormEvent } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Hero } from '@/components/Hero';
 import { authClient } from '@/lib/auth-client';
 
-export default function DocenteLoginPage() {
-  const router = useRouter();
+function DocenteLoginForm() {
+  const searchParams = useSearchParams();
+  const acessoParam = searchParams.get('acesso');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(
+    acessoParam === 'nao_autorizado'
+      ? 'Este e-mail não possui permissão ativa na tabela de docentes.'
+      : ''
+  );
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
@@ -27,7 +33,7 @@ export default function DocenteLoginPage() {
           email: normalizedEmail,
           password,
           name: name.trim() || normalizedEmail.split('@')[0],
-          callbackURL: '/docente',
+          callbackURL: '/api/docente/entrar',
         });
 
         if (res.error) {
@@ -39,7 +45,7 @@ export default function DocenteLoginPage() {
         const res = await authClient.signIn.email({
           email: normalizedEmail,
           password,
-          callbackURL: '/docente',
+          callbackURL: '/api/docente/entrar',
         });
 
         if (res.error) {
@@ -49,17 +55,7 @@ export default function DocenteLoginPage() {
         }
       }
 
-      router.refresh();
-
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        const sessionCheck = await authClient.getSession();
-        if (sessionCheck?.data?.session) {
-          break;
-        }
-      }
-
-      window.location.replace('/docente');
+      window.location.assign('/api/docente/entrar');
     } catch {
       setError('Erro de comunicação ao autenticar.');
       setLoading(false);
@@ -67,94 +63,102 @@ export default function DocenteLoginPage() {
   }
 
   return (
+    <div className="container" style={{ maxWidth: 480, padding: '40px 24px 64px' }}>
+      <div className="card" style={{ padding: 28 }}>
+        <p className="hint" style={{ fontWeight: 600, marginBottom: 4 }}>
+          IFES+Alegre · Acesso Restrito
+        </p>
+        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 18 }}>
+          {isSignUp ? 'Cadastrar credencial docente' : 'Entrar no painel'}
+        </h2>
+
+        <form onSubmit={(e) => void handleSubmit(e)} className="form" style={{ gap: 16 }}>
+          {isSignUp && (
+            <div className="field">
+              <label htmlFor="d-name">Nome completo</label>
+              <input
+                id="d-name"
+                type="text"
+                required
+                className="input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex.: Prof. Maria Silva"
+              />
+            </div>
+          )}
+
+          <div className="field">
+            <label htmlFor="d-email">E-mail institucional</label>
+            <input
+              id="d-email"
+              type="email"
+              required
+              className="input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="docente@ifes.edu.br"
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="d-password">Senha</label>
+            <input
+              id="d-password"
+              type="password"
+              required
+              className="input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+
+          {error && (
+            <p role="alert" className="status status-err">
+              {error}
+            </p>
+          )}
+
+          <button type="submit" className="btn btn-lg" disabled={loading} style={{ width: '100%' }}>
+            {loading ? 'Aguarde...' : isSignUp ? 'Criar conta e entrar' : 'Entrar'}
+          </button>
+        </form>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsSignUp((prev) => !prev);
+            setError('');
+          }}
+          style={{
+            marginTop: 16,
+            width: '100%',
+            background: 'none',
+            border: 0,
+            cursor: 'pointer',
+            fontSize: 13,
+            fontWeight: 500,
+            color: 'var(--ink-2)',
+          }}
+        >
+          {isSignUp ? 'Já possui conta? Fazer login' : 'Primeiro acesso? Cadastrar credencial'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function DocenteLoginPage() {
+  return (
     <main>
       <Hero
-        title={isSignUp ? 'Ativar acesso docente' : 'Área Docente'}
+        title="Área Docente"
         subtitle="Acesse o painel para gerenciar atividades, monitorias, avisos e moderação da galeria."
       />
-      <div className="container" style={{ maxWidth: 480, padding: '40px 24px 64px' }}>
-        <div className="card" style={{ padding: 28 }}>
-          <p className="hint" style={{ fontWeight: 600, marginBottom: 4 }}>
-            IFES+Alegre · Acesso Restrito
-          </p>
-          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 18 }}>
-            {isSignUp ? 'Cadastrar credencial docente' : 'Entrar no painel'}
-          </h2>
-
-          <form onSubmit={(e) => void handleSubmit(e)} className="form" style={{ gap: 16 }}>
-            {isSignUp && (
-              <div className="field">
-                <label htmlFor="d-name">Nome completo</label>
-                <input
-                  id="d-name"
-                  type="text"
-                  required
-                  className="input"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Ex.: Prof. Maria Silva"
-                />
-              </div>
-            )}
-
-            <div className="field">
-              <label htmlFor="d-email">E-mail institucional</label>
-              <input
-                id="d-email"
-                type="email"
-                required
-                className="input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="docente@ifes.edu.br"
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="d-password">Senha</label>
-              <input
-                id="d-password"
-                type="password"
-                required
-                className="input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-              />
-            </div>
-
-            {error && (
-              <p role="alert" className="status status-err">
-                {error}
-              </p>
-            )}
-
-            <button type="submit" className="btn btn-lg" disabled={loading} style={{ width: '100%' }}>
-              {loading ? 'Aguarde...' : isSignUp ? 'Criar conta e entrar' : 'Entrar'}
-            </button>
-          </form>
-
-          <button
-            type="button"
-            onClick={() => {
-              setIsSignUp((prev) => !prev);
-              setError('');
-            }}
-            style={{
-              marginTop: 16,
-              width: '100%',
-              background: 'none',
-              border: 0,
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500,
-              color: 'var(--ink-2)',
-            }}
-          >
-            {isSignUp ? 'Já possui conta? Fazer login' : 'Primeiro acesso? Cadastrar credencial'}
-          </button>
-        </div>
-      </div>
+      <Suspense fallback={<div className="container" style={{ padding: '40px 24px 64px' }} />}>
+        <DocenteLoginForm />
+      </Suspense>
     </main>
   );
 }
