@@ -1,52 +1,152 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Hero } from '@/components/Hero';
+import { Logo } from '@/components/Logo';
+import { SITE } from '@/lib/site';
 
-export const metadata: Metadata = { title: 'Sobre o projeto' };
+export const metadata: Metadata = {
+  title: 'Sobre o projeto',
+  description:
+    'Conheça a iniciativa IFES+Alegre, criada para reunir atividades extracurriculares, monitorias e eventos do Campus de Alegre.',
+};
 
-// TODO(front): este texto foi reescrito; comparar com o texto da página "Sobre" do site original (Wix).
-const GOALS = [
-  { title: 'Divulgar', text: 'Mostrar todas as atividades do campus de forma clara e atualizada.', color: '#F9C46B' },
-  { title: 'Facilitar', text: 'Permitir que o estudante conheça horários e faça a inscrição sem burocracia.', color: '#DDA3F0' },
-  { title: 'Registrar', text: 'Guardar na galeria os melhores momentos vividos no campus.', color: '#B9E3C9' },
-  { title: 'Aproximar', text: 'Conectar estudantes e docentes em torno de interesses em comum.', color: '#C7CEF2' },
+const PILARES = [
+  {
+    titulo: 'Informação centralizada',
+    texto:
+      'Reúne horários, locais, vagas e responsáveis de clubes, projetos esportivos, culturais e monitorias em um único portal.',
+  },
+  {
+    titulo: 'Integração estudantil',
+    texto:
+      'Aproxima estudantes de diferentes cursos e turmas com interesses em comum, fortalecendo a vivência no campus.',
+  },
+  {
+    titulo: 'Apoio acadêmico e bem-estar',
+    texto:
+      'Facilita o acesso às monitorias e incentiva práticas esportivas, artísticas e colaborativas no contraturno.',
+  },
+  {
+    titulo: 'Gestão docente simplificada',
+    texto:
+      'Oferece painel administrativo para publicação de avisos, acompanhamento de inscrições e moderação da galeria.',
+  },
 ];
 
 export default function SobrePage() {
   return (
     <main>
-      <Hero title="Sobre o projeto" subtitle="Conheça a ideia por trás do IFES+Alegre." />
-      <section className="container" style={{ padding: '44px 24px 28px' }}>
-        <h2 style={{ fontSize: 26, fontWeight: 700, color: 'var(--green-dark)', marginBottom: 12 }}>O que é o IFES+Alegre?</h2>
-        <p style={{ maxWidth: 760, fontSize: 16, color: 'var(--ink-2)' }}>O IFES+Alegre é um site criado por estudantes do 3ºTII para reunir, em um só lugar, as atividades extracurriculares do Campus de Alegre. Aqui você descobre o que está acontecendo, vê os horários, entra em contato com os docentes responsáveis e acompanha os avisos e as fotos do campus.</p>
-      </section>
-      <section className="bg-cream">
-        <div className="container" style={{ padding: '44px 24px' }}>
-          <h2 style={{ fontSize: 26, fontWeight: 700, color: 'var(--green-dark)', marginBottom: 20 }}>Nossos objetivos</h2>
-          <div className="cards" style={{ gap: 16 }}>
-            {GOALS.map((g, i) => (
-              <div key={g.title} className="card" style={{ flex: '1 1 220px', borderColor: '#E8E8D0' }}>
-                <div className="tile" aria-hidden="true" style={{ width: 36, height: 36, borderRadius: '50%', fontWeight: 700, background: g.color }}>{i + 1}</div>
-                <h3 style={{ fontSize: 17, fontWeight: 600, margin: '12px 0 6px' }}>{g.title}</h3>
-                <p style={{ fontSize: 14, color: 'var(--ink-2)' }}>{g.text}</p>
-              </div>
+      <Hero
+        eyebrow="IFES · Campus de Alegre"
+        title="Sobre o IFES+Alegre"
+        subtitle="Conectando histórias, pessoas e momentos que vão além da sala de aula."
+      />
+
+      <div
+        className="container"
+        style={{
+          maxWidth: 1040,
+          padding: '40px 16px 64px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 32,
+        }}
+      >
+        <section
+          className="card"
+          style={{
+            padding: 28,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 28,
+            alignItems: 'center',
+          }}
+        >
+          <div style={{ flex: '1 1 320px', minWidth: 0 }}>
+            <h2 style={{ fontSize: 24, fontWeight: 700, margin: '0 0 12px' }}>
+              O que é o projeto?
+            </h2>
+            <p style={{ color: 'var(--ink-2)', lineHeight: 1.65, margin: '0 0 12px' }}>
+              O <strong>IFES+Alegre</strong> nasceu da necessidade de tornar mais acessível e organizada a
+              divulgação das atividades extracurriculares do <strong>{SITE.institution} · {SITE.campus}</strong>.
+            </p>
+            <p style={{ color: 'var(--ink-2)', lineHeight: 1.65, margin: '0 0 16px' }}>
+              Muitas vezes, clubes de leitura, xadrez, corrida, teatro, modalidades esportivas e horários de
+              monitoria passam despercebidos na rotina acadêmica. A plataforma reúne essas oportunidades em
+              um só lugar, permitindo que cada estudante encontre atividades compatíveis com seus horários e
+              interesses.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              <Link href="/atividades" className="btn">
+                Explorar atividades
+              </Link>
+              <Link href="/contatos" className="btn btn-outline">
+                Falar com setores e docentes
+              </Link>
+            </div>
+          </div>
+
+          <div
+            style={{
+              flex: '1 1 240px',
+              minWidth: 0,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <div
+              className="tile"
+              style={{
+                width: '100%',
+                maxWidth: 320,
+                aspectRatio: '4/3',
+                borderRadius: 20,
+                background: '#F6E8E2',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Logo size={116} label="Logo IFES+Alegre" />
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 16px' }}>
+            Pilares da plataforma
+          </h2>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(235px, 1fr))',
+              gap: 16,
+            }}
+          >
+            {PILARES.map((pilar) => (
+              <article key={pilar.titulo} className="card" style={{ padding: 20, minWidth: 0 }}>
+                <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 8px' }}>{pilar.titulo}</h3>
+                <p style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.55, margin: 0 }}>
+                  {pilar.texto}
+                </p>
+              </article>
             ))}
           </div>
-        </div>
-      </section>
-      <section className="container" style={{ padding: '44px 24px' }}>
-        <h2 style={{ fontSize: 26, fontWeight: 700, color: 'var(--green-dark)', marginBottom: 12 }}>Por que criamos o site?</h2>
-        <p style={{ maxWidth: 760, fontSize: 16, color: 'var(--ink-2)' }}>Muitas atividades do campus eram pouco conhecidas porque a informação ficava espalhada em cartazes e grupos de mensagens. Queremos que todo estudante saiba o que existe, consiga participar com facilidade e sinta que faz parte da vida do campus.</p>
-      </section>
-      <section className="bg-lilac">
-        <div className="container" style={{ padding: '40px 24px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 6 }}>Continue explorando</h2>
-            <p style={{ color: 'var(--ink-2)' }}>Veja as atividades e encontre a sua.</p>
-          </div>
-          <Link href="/atividades" className="btn btn-lg">Ver atividades</Link>
-        </div>
-      </section>
+        </section>
+
+        <section className="card" style={{ padding: 24 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>
+            Compromisso com privacidade e uso institucional
+          </h2>
+          <p style={{ color: 'var(--ink-2)', lineHeight: 1.6, margin: 0 }}>
+            Todas as inscrições e envios de fotos seguem as diretrizes descritas na nossa{' '}
+            <Link href="/privacidade" style={{ fontWeight: 600 }}>
+              Política de Privacidade e LGPD
+            </Link>
+            , com moderação realizada pela equipe docente autorizada do campus.
+          </p>
+        </section>
+      </div>
     </main>
   );
 }
