@@ -49,10 +49,17 @@ export default function DocenteLoginPage() {
         }
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      router.push('/docente');
       router.refresh();
-      window.location.assign('/docente');
+
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        const sessionCheck = await authClient.getSession();
+        if (sessionCheck?.data?.session) {
+          break;
+        }
+      }
+
+      window.location.replace('/docente');
     } catch {
       setError('Erro de comunicação ao autenticar.');
       setLoading(false);
