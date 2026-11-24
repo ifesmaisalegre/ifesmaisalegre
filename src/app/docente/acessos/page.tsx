@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { Hero } from '@/components/Hero';
 
 type StatusAcesso = 'pendente' | 'aprovado' | 'suspenso' | 'recusado';
@@ -137,10 +138,13 @@ export default function DocenteAcessosPage() {
         subtitle="Analise quem tentou acessar ou criar conta: permita, suspenda, recuse ou exclua solicitações."
       />
 
-      <div
-        className="container"
-        style={{ padding: '32px 16px 64px', maxWidth: 1040 }}
-      >
+      <div className="container" style={{ padding: '24px 16px 64px', maxWidth: 1080 }}>
+        <div style={{ marginBottom: 20 }}>
+          <Link href="/docente" className="btn btn-ghost" style={{ fontSize: 13 }}>
+            ← Voltar ao painel docente
+          </Link>
+        </div>
+
         <div className="card" style={{ padding: 20, marginBottom: 24 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>
             Pré-cadastrar ou definir permissão de e-mail
@@ -225,7 +229,7 @@ export default function DocenteAcessosPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(275px, 1fr))',
               gap: 16,
             }}
           >
@@ -271,13 +275,7 @@ export default function DocenteAcessosPage() {
                     )}
                   </div>
 
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: 8,
-                    }}
-                  >
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     <button
                       type="button"
                       className="btn"

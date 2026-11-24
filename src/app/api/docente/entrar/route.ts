@@ -1,25 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { Pool } from 'pg';
 import { auth } from '@/lib/auth';
-import { db } from '@/prisma/db';
 
 export const dynamic = 'force-dynamic';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ormPublic = (db as unknown as { orm: { public: Record<string, any> } }).orm.public;
-
-async function isAuthorizedDocente(email: string): Promise<boolean> {
-  const normalized = email.trim().toLowerCase();
-  if (!normalized) return false;
-
-  const docentes = await ormPublic.Docente.all();
-  const list = Array.isArray(docentes) ? docentes : [];
-  if (list.length === 0) return false;
-
-  return list.some(
-    (d: Record<string, unknown>) =>
-      String(d.email ?? '').trim().toLowerCase() === normalized && Boolean(d.active ?? true)
-  );
-}
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
 export async function GET(request: NextRequest) {
   const origin = request.nextUrl.origin;
@@ -34,8 +21,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/docente/login', origin));
     }
 
-    const authorized = await isAuthorizedDocente(email);
-    if (!authorized) {
+    const docenteRes = await pool.query<{ active: boolean }>(
+      `SELECT active FROM "Docente" WHERE LOWER(email) = $1 LIMIT 1`,
+      [email]
+    );
+
+    const isActiveDocente = docenteRes.rows.length > 0 && Boolean(docenteRes.rows[0].active);
+
+    if (!isActiveDocente) {
+      await pool.query(
+        `INSERT INTO "SolicitacaoAcesso" (email, name, status, motivo, "updatedAt")
+         VALUES ($1, $2, 'pendente', 'Tentativa de entrada no painel sem aprovação', now())
+         ON CONFLICT (email) DO UPDATE
+         SET "updatedAt" = now()`,
+        [email, session.user.name || email.split('@')[0]]
+      );
+
       return NextResponse.redirect(new URL('/docente/login?acesso=nao_autorizado', origin));
     }
 

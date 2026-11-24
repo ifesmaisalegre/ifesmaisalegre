@@ -1,23 +1,22 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Hero } from '@/components/Hero';
 import { DOCENTES, EMAIL_DOMAIN } from '@/data/docentes';
 
 const TONES = ['#E6E9F8', '#FDE9C8', '#DDF1E5', '#EBDDF3'];
-const SETORES = ['Todos', 'Professores', 'CGAC', 'DIREN', 'Coordenação'] as const;
-
-type SetorFiltro = (typeof SETORES)[number];
+const SETORES = ['Todos', 'Professores', 'CGAC', 'DIREN', 'Coordenação', 'Secretaria', 'Outro'] as const;
 
 type ContatoItem = {
   id: string;
   name: string;
   email: string;
-  setor: Exclude<SetorFiltro, 'Todos'>;
-  cargo?: string;
+  setor: string;
+  cargo?: string | null;
+  telefone?: string | null;
 };
 
-const CONTATOS_SETORIAIS: ContatoItem[] = [
+const CONTATOS_SETORIAIS_PADRAO: ContatoItem[] = [
   {
     id: 'cgac-geral',
     name: 'Coordenadoria Geral de Atenção aos Discentes (CGAC)',
@@ -34,7 +33,7 @@ const CONTATOS_SETORIAIS: ContatoItem[] = [
   },
   {
     id: 'coord-tii',
-    name: 'Coordenação de Informática / Cursos',
+    name: 'Coordenação de Cursos / Informática',
     email: `informatica.alegre@${EMAIL_DOMAIN}`,
     setor: 'Coordenação',
     cargo: 'Coordenação acadêmica',
@@ -42,10 +41,36 @@ const CONTATOS_SETORIAIS: ContatoItem[] = [
 ];
 
 export default function ContatosPage() {
-  const [setorAtivo, setSetorAtivo] = useState<SetorFiltro>('Todos');
+  const [setorAtivo, setSetorAtivo] = useState<string>('Todos');
+  const [contatosBanco, setContatosBanco] = useState<ContatoItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/docente/contatos', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data: { contatos?: Array<{ id: number; name: string; email: string; setor: string; cargo?: string | null; telefone?: string | null }> }) => {
+        if (!active || !Array.isArray(data.contatos)) return;
+        setContatosBanco(
+          data.contatos.map((c) => ({
+            id: `db-${c.id}`,
+            name: c.name,
+            email: c.email,
+            setor: c.setor || 'Professores',
+            cargo: c.cargo ?? null,
+            telefone: c.telefone ?? null,
+          }))
+        );
+      })
+      .catch(() => {
+        // mantém contatos padrão em caso de indisponibilidade
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const todosContatos = useMemo<ContatoItem[]>(() => {
-    const docentesFormatados: ContatoItem[] = DOCENTES.map((d, idx) => ({
+    const docentesPadrao: ContatoItem[] = DOCENTES.map((d, idx) => ({
       id: `docente-${idx}-${d.emailUser}`,
       name: d.name,
       email: `${d.emailUser}@${EMAIL_DOMAIN}`,
@@ -53,12 +78,16 @@ export default function ContatosPage() {
       cargo: 'Docente · IFES Campus de Alegre',
     }));
 
-    return [...CONTATOS_SETORIAIS, ...docentesFormatados];
-  }, []);
+    const mapa = new Map<string, ContatoItem>();
+    for (const item of [...CONTATOS_SETORIAIS_PADRAO, ...docentesPadrao, ...contatosBanco]) {
+      mapa.set(item.email.trim().toLowerCase(), item);
+    }
+    return Array.from(mapa.values());
+  }, [contatosBanco]);
 
   const contatosFiltrados = useMemo(() => {
     if (setorAtivo === 'Todos') return todosContatos;
-    return todosContatos.filter((item) => item.setor === setorAtivo);
+    return todosContatos.filter((item) => item.setor.toLowerCase() === setorAtivo.toLowerCase());
   }, [setorAtivo, todosContatos]);
 
   return (
@@ -68,10 +97,7 @@ export default function ContatosPage() {
         subtitle="Alunos e professores encontram aqui os meios de contato de forma rápida e prática, para tirar dúvidas, trocar informações e fortalecer a conexão entre todos do IFES · Campus de Alegre."
       />
 
-      <div
-        className="container"
-        style={{ padding: '32px 16px 64px', maxWidth: 1120 }}
-      >
+      <div className="container" style={{ padding: '32px 16px 64px', maxWidth: 1120 }}>
         <div
           role="group"
           aria-label="Filtrar contatos por setor"
@@ -106,7 +132,7 @@ export default function ContatosPage() {
           className="cards"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(265px, 1fr))',
             gap: 16,
             padding: 0,
             margin: 0,
@@ -129,7 +155,7 @@ export default function ContatosPage() {
                   minWidth: 0,
                   padding: '18px 16px',
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   gap: 14,
                 }}
               >
@@ -153,50 +179,28 @@ export default function ContatosPage() {
                 </span>
 
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div
+                  <span
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 8,
-                      flexWrap: 'wrap',
-                      marginBottom: 4,
+                      display: 'inline-block',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      padding: '2px 8px',
+                      borderRadius: 999,
+                      marginBottom: 6,
+                      background: 'var(--surface-2, rgba(0,0,0,0.06))',
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                        padding: '2px 8px',
-                        borderRadius: 999,
-                        background: 'var(--surface-2, rgba(0,0,0,0.06))',
-                      }}
-                    >
-                      {item.setor}
-                    </span>
-                  </div>
+                    {item.setor}
+                  </span>
 
-                  <p
-                    style={{
-                      fontWeight: 600,
-                      margin: '0 0 4px',
-                      overflowWrap: 'anywhere',
-                    }}
-                  >
+                  <p style={{ fontWeight: 600, margin: '0 0 4px', overflowWrap: 'anywhere' }}>
                     {item.name}
                   </p>
 
                   {item.cargo && (
-                    <p
-                      className="hint"
-                      style={{
-                        fontSize: 12,
-                        margin: '0 0 6px',
-                        overflowWrap: 'anywhere',
-                      }}
-                    >
+                    <p className="hint" style={{ fontSize: 12, margin: '0 0 6px', overflowWrap: 'anywhere' }}>
                       {item.cargo}
                     </p>
                   )}
@@ -204,6 +208,7 @@ export default function ContatosPage() {
                   <a
                     href={`mailto:${item.email}`}
                     style={{
+                      display: 'block',
                       fontSize: 13,
                       overflowWrap: 'anywhere',
                       wordBreak: 'break-word',
@@ -211,6 +216,12 @@ export default function ContatosPage() {
                   >
                     {item.email}
                   </a>
+
+                  {item.telefone && (
+                    <p className="hint" style={{ fontSize: 12, margin: '4px 0 0' }}>
+                      {item.telefone}
+                    </p>
+                  )}
                 </div>
               </li>
             );

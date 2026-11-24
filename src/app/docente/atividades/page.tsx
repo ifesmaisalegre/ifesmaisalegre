@@ -26,11 +26,15 @@ export default async function AdminAtividadesPage() {
           maxWidth: 1120,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: 12,
         }}
       >
+        <Link href="/docente" className="btn btn-ghost" style={{ fontSize: 13 }}>
+          ← Voltar ao painel
+        </Link>
+
         <Link href="/docente/monitorias" className="btn">
           Gerenciar monitorias
         </Link>

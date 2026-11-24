@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Hero } from '@/components/Hero';
 import { DocentePanel } from '@/components/DocentePanel';
 import { DocenteLogoutButton } from '@/components/DocenteLogoutButton';
@@ -33,10 +34,24 @@ export default async function DocentePage() {
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-end',
-          paddingTop: 20,
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12,
+          padding: '20px 16px 0',
         }}
       >
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <Link href="/docente/atividades" className="btn btn-ghost" style={{ fontSize: 13 }}>
+            Atividades e monitorias
+          </Link>
+          <Link href="/docente/contatos" className="btn btn-ghost" style={{ fontSize: 13 }}>
+            Gerenciar contatos
+          </Link>
+          <Link href="/docente/acessos" className="btn btn-ghost" style={{ fontSize: 13 }}>
+            Controle de acessos
+          </Link>
+        </div>
+
         <DocenteLogoutButton />
       </div>
       <DocentePanel
